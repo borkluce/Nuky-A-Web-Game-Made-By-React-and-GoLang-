@@ -29,7 +29,6 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Printf("Message taken: %s\n", msg)
 
-		// Gelen mesajı geri gönder
 		err = conn.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
 			fmt.Println("Error sending message:", err)
