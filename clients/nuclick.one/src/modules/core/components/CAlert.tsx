@@ -1,4 +1,4 @@
-import Alert from "../types/Alert"
+import Alert from "../types/alert"
 
 const CAlert: React.FC<Alert> = ({ id, message, onClose, className, type }) => {
     return (

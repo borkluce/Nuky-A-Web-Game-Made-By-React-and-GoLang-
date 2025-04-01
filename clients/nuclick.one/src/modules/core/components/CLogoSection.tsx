@@ -21,24 +21,8 @@ const CLogoSection: React.FC<CLogoSectionProps> = ({
             <img
                 src="/brand/logo/raw.png"
                 alt="Logo"
-                className={`w-16 ${lightMode ? "" : ""} ${className}`}
+                className={`w-44 -my-12  ${lightMode ? "" : ""} ${className}`}
             />
-            {isHorizontal && (
-                <span
-                    className={`font-bold ${
-                        lightMode ? "text-white" : "text-black font-normal"
-                    }`}
-                >
-                    {`</>`}
-                </span>
-            )}
-            <span
-                className={`font-bold ${
-                    lightMode ? "text-white" : "text-black"
-                }`}
-            >
-                {document.URL.split("/")[2].split(":")[0].split(".")[0]}
-            </span>
         </div>
     )
 }

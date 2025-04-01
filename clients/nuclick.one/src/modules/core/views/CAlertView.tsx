@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 
 // Types
-import Alert from "../types/Alert"
+import Alert from "../types/alert"
 
 // Components
 import CAlert from "../components/CAlert"

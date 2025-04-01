@@ -5,7 +5,7 @@ import CAlert from "./components/CAlert"
 import CTabs from "./components/CTabs"
 
 // Types
-import Alert from "./types/Alert"
+import Alert from "./types/alert"
 
 export { CLogoSection, CButton, CInputField, CAlert, CTabs }
 export type { Alert }
