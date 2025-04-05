@@ -1,39 +1,67 @@
-import React, { useState } from "react"
-import { State } from "../types/state"
+import React, { useState, useEffect } from "react";
+import { State } from "../types/state";
 
 interface GameViewProps {
-    className?: string
+    className?: string;
 }
 
+// Test verisi (backend bağlanınca burası API'den çekilecek)
+const mockStates: State[] = [
+    { id: 1, state_name: "Zartistan", state_color_hex: "#FF5733", attack_count: 50, support_count: 30 },
+    { id: 2, state_name: "Zurtistan", state_color_hex: "#33FF57", attack_count: 20, support_count: 40 },
+    { id: 3, state_name: "Sarachane", state_color_hex: "#3357FF", attack_count: 100, support_count: 10 },
+    { id: 4, state_name: "Taksim", state_color_hex: "#F3FF33", attack_count: 70, support_count: 60 },
+    { id: 5, state_name: "Sirkiye", state_color_hex: "#A333FF", attack_count: 90, support_count: 20 },
+    { id: 6, state_name: "Trumpistan", state_color_hex: "#FF33A3", attack_count: 40, support_count: 50 }
+];
+
 const GameView: React.FC<GameViewProps> = ({ className }) => {
-    const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
-    const [popupStateInfo, setPopupStateInfo] = useState<State | null>(null)
+    const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+    const [popupStateInfo, setPopupStateInfo] = useState<State | null>(null);
+    const [topStates, setTopStates] = useState<State[]>([]);
+
+    // State'leri sıralayıp ilk 5 tanesini seçiyoruz
+    useEffect(() => {
+        const sortedStates = [...mockStates]
+            .sort((a, b) => (b.attack_count-b.support_count) - (a.attack_count-a.support_count))
+            .slice(0, 5);
+        setTopStates(sortedStates);
+    }, []);
 
     const handleCountryClick = (country: string) => {
-        setSelectedCountry(country)
-        console.log(`You clicked on ${country}`)
-    }
+        setSelectedCountry(country);
+        console.log(`You clicked on ${country}`);
+    };
 
     const handleHoverCountry = (country: string) => {
-        setPopupStateInfo()
-    }
+        setPopupStateInfo(null);
+    };
 
     return (
-        <div
-            className={`flex flex-col w-screen overflow-y-hidden ${className}`}
-        >
+        <div className={`flex flex-col w-screen overflow-y-hidden ${className}`}>
             <div className="flex w-screen justify-center">
-                {/* <div className="bg-white/75 backdrop-blur-xs w-[85vw] h-[90vh] left-1/2 absolute -translate-1/2 top-1/2"></div> */}
-                <div className="bg-white/50 border-r-[5px] border-r-1 min-w-[390px] h-screen left-0 absolute p-8">
-                    <p className="text-black">test</p>
+                {/* The Left Panel */}
+                <div className="bg-white/50 border-r-[5px] min-w-[390px] h-screen left-0 absolute p-8">
+                    <h2 className="text-black text-lg font-bold mb-4">Top 5 Dangerous States</h2>
+                    <ul>
+                        {topStates.map((state, index) => (
+                            <li key={state.id} className="text-black mb-2">
+                                <span className="font-semibold">{index + 1}. {state.state_name}</span> - 
+                                <span className="text-red-500"> {(state.attack_count-state.support_count)} Damage</span>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
+
+                {/* SVG Render Metodu */}
                 {renderSVG()}
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default GameView
+export default GameView;
+
 
 function renderSVG() {
     return (
