@@ -33,14 +33,14 @@ const GameView: React.FC = () => {
 
     return (
         <div className="bg-white/50 border-r-[5px] min-w-[390px] h-screen left-0 absolute p-8">
-            <h2 className="text-black text-lg font-bold mb-4">Top 5 Attack States</h2>
+            <h2 className="text-black text-lg font-bold mb-4">Top 5 Dangerous States</h2>
             <ul>
                 {topStates.map((state, index) => (
                     <li key={state.id} className="text-black mb-2">
                         <span className="font-semibold">
                             {index + 1}. {state.state_name}
                         </span>{" "}
-                        - <span className="text-red-500">{state.attack_count} Attacks</span>
+                        - <span className="text-red-500">{state.attack_count} Damages</span>
                     </li>
                 ))}
             </ul>
