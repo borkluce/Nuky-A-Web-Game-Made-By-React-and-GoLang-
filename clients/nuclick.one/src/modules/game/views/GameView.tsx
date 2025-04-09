@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { State } from "../types/state"
 import { supabase } from "../../../lib/supabaseClient"
-import { Flag, Shield } from "lucide-react" // Using lucide-react icons
+import { Sword, Shield } from "lucide-react" // Using lucide-react icons
 
 const GameView: React.FC = () => {
     const [topStates, setTopStates] = useState<State[]>([])
@@ -90,13 +90,13 @@ const GameView: React.FC = () => {
                             zIndex: 10
                         }}
                     >
-                        {/* Attack Icon */}
+                        {/* Attack Icon (Sword) */}
                         <button 
                             onClick={() => handleIconClick('attack')}
                             className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
                             title="Attack"
                         >
-                            <Shield className="w-6 h-6" />
+                            <Sword className="w-6 h-6" />
                         </button>
                         
                         {/* Defend Icon */}
@@ -105,7 +105,7 @@ const GameView: React.FC = () => {
                             className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors"
                             title="Defend"
                         >
-                            <Flag className="w-6 h-6" />
+                            <Shield className="w-6 h-6" />
                         </button>
                     </div>
                 )}
