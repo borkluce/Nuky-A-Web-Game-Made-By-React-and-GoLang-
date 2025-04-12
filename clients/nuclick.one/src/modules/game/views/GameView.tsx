@@ -7,37 +7,41 @@ const GameView: React.FC = () => {
     const [topStates, setTopStates] = useState<State[]>([])
     const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
     const [iconPosition, setIconPosition] = useState({ x: 0, y: 0 })
+    const [loading, setLoading] = useState<boolean>(false)
 
     useEffect(() => {
-        const fetchTopStates = async () => {
-            const { data, error } = await supabase
-                .from("states")
-                .select("*")
-                .order("attack_count", { ascending: false })
-                .limit(5)
-            
-            console.log("Data:", data)
-            console.log("Error:", error)
-    
-            if (error) {
-                console.error("Supabase error:", error)
-            } else {
-                console.log("Fetched States:")
-                data?.forEach((state) => {
-                    console.log(`- ${state.state_name}`)
-                })
-    
-                setTopStates(data as State[])
-            }
-        }
-    
         fetchTopStates()
     }, [])
+
+    const fetchTopStates = async () => {
+        const { data, error } = await supabase
+            .from("states")
+            .select("*")
+            .order("attack_count", { ascending: false })
+            .limit(5)
+        
+        console.log("Data:", data)
+        console.log("Error:", error)
+
+        if (error) {
+            console.error("Supabase error:", error)
+        } else {
+            console.log("Fetched States:")
+            data?.forEach((state) => {
+                console.log(`- ${state.state_name}`)
+            })
+
+            setTopStates(data as State[])
+        }
+    }
 
     const handleCountryClick = (countryId: string, event: React.MouseEvent) => {
         console.log("Clicked country:", countryId)
         
-        // Calculate position for icons
+        // Get the position of the clicked SVG element
+        const svgElement = event.currentTarget as SVGElement
+        const boundingRect = svgElement.getBoundingClientRect()
+
         // Using mouse position for icon placement
         setIconPosition({
             x: event.clientX - 425, // Offset to the left by 50px
@@ -48,15 +52,55 @@ const GameView: React.FC = () => {
         setSelectedCountry(countryId)
     }
 
-    const handleIconClick = (actionType: 'attack' | 'defend') => {
-        if (selectedCountry) {
+    const handleIconClick = async (actionType: 'attack' | 'defend') => {
+        if (selectedCountry && !loading) {
+            setLoading(true)
             console.log(`${actionType} action on country: ${selectedCountry}`)
-            // Here you can implement the logic for attack or defend
             
-            // After handling the action, clear the selection
-            setSelectedCountry(null)
+            try {
+                // First, get the current state data
+                const { data: stateData, error: fetchError } = await supabase
+                    .from("states")
+                    .select("*")
+                    .eq("id", selectedCountry)
+                    .single()
+                
+                if (fetchError) {
+                    console.error("Error fetching state data:", fetchError)
+                    return
+                }
+                
+                // Update the appropriate counter based on the action
+                const updateField = actionType === 'attack' ? 'attack_count' : 'support_count'
+                const currentValue = stateData[updateField] || 0
+                
+                // Perform the update
+                const { error: updateError } = await supabase
+                    .from("states")
+                    .update({ [updateField]: currentValue + 1 })
+                    .eq("id", selectedCountry)
+                
+                if (updateError) {
+                    console.error(`Error updating ${updateField}:`, updateError)
+                } else {
+                    console.log(`${updateField} updated successfully for ${selectedCountry}`)
+                    
+                    // Refresh top states after update
+                    fetchTopStates()
+                    
+                    // Show notification or feedback if needed
+                    // This is where you could add a toast notification or other UI feedback
+                }
+            } catch (error) {
+                console.error("Unexpected error:", error)
+            } finally {
+                // After handling the action, clear the selection and loading state
+                setSelectedCountry(null)
+                setLoading(false)
+            }
         }
     }
+
 
     return (
         <div className="flex flex-row w-screen h-screen overflow-hidden">
@@ -70,6 +114,9 @@ const GameView: React.FC = () => {
                                 {index + 1}. {state.state_name}
                             </span>{" "}
                             - <span className="text-red-500">{state.attack_count} Damages</span>
+                            {state.support_count > 0 && (
+                                <span className="text-blue-500"> / {state.support_count} Supports</span>
+                            )}
                         </li>
                     ))}
                 </ul>
@@ -93,17 +140,19 @@ const GameView: React.FC = () => {
                         {/* Attack Icon (Sword) */}
                         <button 
                             onClick={() => handleIconClick('attack')}
-                            className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
+                            className={`bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                             title="Attack"
+                            disabled={loading}
                         >
                             <Sword className="w-6 h-6" />
                         </button>
                         
-                        {/* Defend Icon */}
+                        {/* Defend Icon (Shield) */}
                         <button 
                             onClick={() => handleIconClick('defend')}
-                            className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors"
+                            className={`bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                             title="Defend"
+                            disabled={loading}
                         >
                             <Shield className="w-6 h-6" />
                         </button>

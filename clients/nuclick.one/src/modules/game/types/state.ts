@@ -1,5 +1,5 @@
 export interface State {
-    id: number
+    id: string
     state_name: string
     state_color_hex: string
     attack_count: number
