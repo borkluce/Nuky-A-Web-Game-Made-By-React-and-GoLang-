@@ -26,17 +26,22 @@ const GameView: React.FC = () => {
         if (error) {
             console.error("Supabase error:", error)
         } else {
-            console.log("Fetched States:")
-            data?.forEach((state) => {
-                console.log(`- ${state.state_name}`)
-            })
-
             setTopStates(data as State[])
         }
     }
 
     const handleCountryClick = (countryId: string, event: React.MouseEvent) => {
         console.log("Clicked country:", countryId)
+
+        // Controlling that if ID does not exist in DB
+        supabase
+            .from("states")
+            .select("*")
+            .eq("id", countryId)
+            .then(({ data, error }) => {
+                console.log(`Country ${countryId} in DB:`, data, error)
+            })
+
         
         // Get the position of the clicked SVG element
         const svgElement = event.currentTarget as SVGElement
@@ -70,6 +75,11 @@ const GameView: React.FC = () => {
                     return
                 }
                 
+                if (!stateData) {
+                    console.error("No state found with ID:", selectedCountry)
+                    return
+                }
+                
                 // Update the appropriate counter based on the action
                 const updateField = actionType === 'attack' ? 'attack_count' : 'support_count'
                 const currentValue = stateData[updateField] || 0
@@ -87,19 +97,16 @@ const GameView: React.FC = () => {
                     
                     // Refresh top states after update
                     fetchTopStates()
-                    
-                    // Show notification or feedback if needed
-                    // This is where you could add a toast notification or other UI feedback
                 }
             } catch (error) {
                 console.error("Unexpected error:", error)
             } finally {
-                // After handling the action, clear the selection and loading state
                 setSelectedCountry(null)
                 setLoading(false)
             }
         }
     }
+    
 
 
     return (
