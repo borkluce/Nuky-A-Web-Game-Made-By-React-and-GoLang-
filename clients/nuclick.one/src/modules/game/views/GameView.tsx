@@ -1,48 +1,18 @@
 import React, { useEffect, useState } from "react"
 import { State } from "../types/state"
-import { supabase } from "../../../lib/supabaseClient"
-import { Sword, Shield } from "lucide-react" // Using lucide-react icons
+
+// Icons
+import { LuSword } from "react-icons/lu"
+import { FaShieldAlt } from "react-icons/fa"
 
 const GameView: React.FC = () => {
-    const [topStates, setTopStates] = useState<State[]>([])
     const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
     const [iconPosition, setIconPosition] = useState({ x: 0, y: 0 })
     const [loading, setLoading] = useState<boolean>(false)
 
-    useEffect(() => {
-        fetchTopStates()
-    }, [])
-
-    const fetchTopStates = async () => {
-        const { data, error } = await supabase
-            .from("states")
-            .select("*")
-            .order("attack_count", { ascending: false })
-            .limit(5)
-        
-        console.log("Data:", data)
-        console.log("Error:", error)
-
-        if (error) {
-            console.error("Supabase error:", error)
-        } else {
-            setTopStates(data as State[])
-        }
-    }
-
     const handleCountryClick = (countryId: string, event: React.MouseEvent) => {
         console.log("Clicked country:", countryId)
 
-        // Controlling that if ID does not exist in DB
-        supabase
-            .from("states")
-            .select("*")
-            .eq("id", countryId)
-            .then(({ data, error }) => {
-                console.log(`Country ${countryId} in DB:`, data, error)
-            })
-
-        
         // Get the position of the clicked SVG element
         const svgElement = event.currentTarget as SVGElement
         const boundingRect = svgElement.getBoundingClientRect()
@@ -50,118 +20,85 @@ const GameView: React.FC = () => {
         // Using mouse position for icon placement
         setIconPosition({
             x: event.clientX - 425, // Offset to the left by 50px
-            y: event.clientY - 20  // Offset upward by 20px
-        })        
-        
+            y: event.clientY - 20, // Offset upward by 20px
+        })
+
         // Set the selected country
         setSelectedCountry(countryId)
     }
 
-    const handleIconClick = async (actionType: 'attack' | 'defend') => {
+    const handleIconClick = async (actionType: "attack" | "defend") => {
         if (selectedCountry && !loading) {
             setLoading(true)
             console.log(`${actionType} action on country: ${selectedCountry}`)
-            
-            try {
-                // First, get the current state data
-                const { data: stateData, error: fetchError } = await supabase
-                    .from("states")
-                    .select("*")
-                    .eq("id", selectedCountry)
-                    .single()
-                
-                if (fetchError) {
-                    console.error("Error fetching state data:", fetchError)
-                    return
-                }
-                
-                if (!stateData) {
-                    console.error("No state found with ID:", selectedCountry)
-                    return
-                }
-                
-                // Update the appropriate counter based on the action
-                const updateField = actionType === 'attack' ? 'attack_count' : 'support_count'
-                const currentValue = stateData[updateField] || 0
-                
-                // Perform the update
-                const { error: updateError } = await supabase
-                    .from("states")
-                    .update({ [updateField]: currentValue + 1 })
-                    .eq("id", selectedCountry)
-                
-                if (updateError) {
-                    console.error(`Error updating ${updateField}:`, updateError)
-                } else {
-                    console.log(`${updateField} updated successfully for ${selectedCountry}`)
-                    
-                    // Refresh top states after update
-                    fetchTopStates()
-                }
-            } catch (error) {
-                console.error("Unexpected error:", error)
-            } finally {
-                setSelectedCountry(null)
-                setLoading(false)
-            }
         }
     }
-    
-
 
     return (
         <div className="flex flex-row w-screen h-screen overflow-hidden">
             {/* Left Panel */}
             <div className="bg-white/50 border-r-[5px] min-w-[390px] h-screen left-0 p-8">
-                <h2 className="text-black text-lg font-bold mb-4">Top 5 Dangerous States</h2>
+                <h2 className="text-black text-lg font-bold mb-4">
+                    Top 5 Dangerous States
+                </h2>
                 <ul>
-                    {topStates.map((state, index) => (
+                    {/* {topStates.map((state, index) => (
                         <li key={state.id} className="text-black mb-2">
                             <span className="font-semibold">
                                 {index + 1}. {state.state_name}
                             </span>{" "}
-                            - <span className="text-red-500">{state.attack_count} Damages</span>
+                            -{" "}
+                            <span className="text-red-500">
+                                {state.attack_count} Damages
+                            </span>
                             {state.support_count > 0 && (
-                                <span className="text-blue-500"> / {state.support_count} Supports</span>
+                                <span className="text-blue-500">
+                                    {" "}
+                                    / {state.support_count} Supports
+                                </span>
                             )}
                         </li>
-                    ))}
+                    ))} */}
                 </ul>
             </div>
-    
+
             {/* SVG Map Area */}
             <div className="flex-1 flex items-center justify-center relative">
                 {renderSVG(handleCountryClick)}
-                
+
                 {/* Icons that appear on click */}
                 {selectedCountry && (
-                    <div 
+                    <div
                         className="absolute flex gap-4"
                         style={{
-                            left: iconPosition.x + 'px',
-                            top: iconPosition.y + 'px',
-                            transform: 'translate(0, -100%)',
-                            zIndex: 10
+                            left: iconPosition.x + "px",
+                            top: iconPosition.y + "px",
+                            transform: "translate(0, -100%)",
+                            zIndex: 10,
                         }}
                     >
                         {/* Attack Icon (Sword) */}
-                        <button 
-                            onClick={() => handleIconClick('attack')}
-                            className={`bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        <button
+                            onClick={() => handleIconClick("attack")}
+                            className={`bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors ${
+                                loading ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
                             title="Attack"
                             disabled={loading}
                         >
-                            <Sword className="w-6 h-6" />
+                            <LuSword className="w-6 h-6" />
                         </button>
-                        
+
                         {/* Defend Icon (Shield) */}
-                        <button 
-                            onClick={() => handleIconClick('defend')}
-                            className={`bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        <button
+                            onClick={() => handleIconClick("defend")}
+                            className={`bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors ${
+                                loading ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
                             title="Defend"
                             disabled={loading}
                         >
-                            <Shield className="w-6 h-6" />
+                            <FaShieldAlt className="w-6 h-6" />
                         </button>
                     </div>
                 )}
@@ -170,8 +107,9 @@ const GameView: React.FC = () => {
     )
 }
 
-function renderSVG(onCountryClick: (countryId: string, event: React.MouseEvent) => void) {
-
+function renderSVG(
+    onCountryClick: (countryId: string, event: React.MouseEvent) => void
+) {
     return (
         <svg
             className="w-full h-full bg-black/15"
