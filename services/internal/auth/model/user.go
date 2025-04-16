@@ -1,7 +1,9 @@
 package model
 
+import "time"
+
 type User struct {
 	ID           int
 	Email        string
-	LastMoveDate string
+	LastMoveDate time.Time
 }
