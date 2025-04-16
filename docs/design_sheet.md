@@ -16,20 +16,15 @@
    register()
 ```
 
-#### move
+#### province:
 
 ```
    both functions below requires can_attack true
    every move should be checked by recaptcha
 
+   getAllProvinces()
    attack()
    support()
-```
-
-#### state:
-
-```
-   getStates()
 ```
 
 #### game:
