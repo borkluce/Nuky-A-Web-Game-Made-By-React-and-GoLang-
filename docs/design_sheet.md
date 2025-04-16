@@ -1,27 +1,44 @@
-# Nuky Development Design Sheet
+# Nuky: Development Design Sheet
 
 ### Scheduled Jobs
 
 1. nukeState() / 24h 12:00 UTC:
 
+---
+
 ### Functional Requirements
 
-1. auth:
+#### auth
+
+```
    login()
    logout()
    register()
+```
 
-2. move:
+#### move
+
+```
    both functions below requires can_attack true
    every move should be checked by recaptcha
+
    attack()
    support()
+```
 
-3. state:
+#### state:
+
+```
    getStates()
+```
 
-4. game:
+#### game:
+
+```
    getGame()
+```
+
+---
 
 ### Non Functional Requiremets
 
@@ -33,19 +50,36 @@
 
 4. cpu: graviton-small 60%
 
+---
+
 ### Entities
 
-1. User
+#### user
+
+```js
+{
    email: string, UNIQUE
    password: hashed string
    last_move_date: Date
+}
+```
 
-2. State
-   id: int, UNIQUE
-   state_name: string
-   state_color_hex: string
-   attack_count: int
-   support_count: int
+#### province
 
-3. Game
-   nuked_states: State[]
+```js
+{
+    id: int, UNIQUE
+    province_name: string
+    province_color_hex: string
+    attack_count: int
+    support_count: int
+}
+```
+
+#### game
+
+```js
+{
+   loser_provinces: Province[]
+}
+```

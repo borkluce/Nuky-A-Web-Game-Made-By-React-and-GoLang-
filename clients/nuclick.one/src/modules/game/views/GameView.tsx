@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react"
-import { State } from "../types/state"
+import React, { useState } from "react"
 
 // Icons
 import { LuSword } from "react-icons/lu"
@@ -69,18 +68,18 @@ const GameView: React.FC = () => {
                 {/* Icons that appear on click */}
                 {selectedCountry && (
                     <div
-                        className="absolute flex gap-4"
+                        className="absolute flex gap-2"
                         style={{
                             left: iconPosition.x + "px",
                             top: iconPosition.y + "px",
-                            transform: "translate(0, -100%)",
+                            transform: "translate(0, -20%)",
                             zIndex: 10,
                         }}
                     >
                         {/* Attack Icon (Sword) */}
                         <button
                             onClick={() => handleIconClick("attack")}
-                            className={`bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors ${
+                            className={`bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors cursor-pointer ${
                                 loading ? "opacity-50 cursor-not-allowed" : ""
                             }`}
                             title="Attack"
@@ -92,7 +91,7 @@ const GameView: React.FC = () => {
                         {/* Defend Icon (Shield) */}
                         <button
                             onClick={() => handleIconClick("defend")}
-                            className={`bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors ${
+                            className={`bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors cursor-pointer ${
                                 loading ? "opacity-50 cursor-not-allowed" : ""
                             }`}
                             title="Defend"

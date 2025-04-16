@@ -1,5 +1,7 @@
 import { create } from "zustand"
-import axios from "axios"
+
+// Custom Axios instance with preset base URL
+import { CAxios } from "../../core/configs/cAxios"
 
 // Types
 import { LoginRequest, LoginResponse } from "../types/user.dtos"
@@ -14,7 +16,7 @@ interface useUserState {
 export const useUser = create<useUserState>((set, get) => ({
     user: null,
     login: async (loginRequest) => {
-        const response = await axios.post<LoginResponse>(
+        const response = await CAxios.post<LoginResponse>(
             "/auth/login",
             loginRequest
         )
