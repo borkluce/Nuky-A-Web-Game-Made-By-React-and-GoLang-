@@ -56,7 +56,10 @@
 {
    email: string, UNIQUE
    password: hashed string
-   last_move_date: Date
+   lastMoveDate: Date
+
+   updatedDate: Date
+   deletedDate: Date
 }
 ```
 
@@ -65,10 +68,13 @@
 ```js
 {
     id: int, UNIQUE
-    province_name: string
-    province_color_hex: string
-    attack_count: int
-    support_count: int
+    provinceName: string
+    provinceColorHex: string
+    attackCount: int
+    supportCount: int
+
+    updatedDate: Date
+    deletedDate: Date
 }
 ```
 
@@ -76,6 +82,9 @@
 
 ```js
 {
-   loser_provinces: Province[]
+   loserProvinces: Province[]
+
+   updatedDate: Date
+   deletedDate: Date
 }
 ```

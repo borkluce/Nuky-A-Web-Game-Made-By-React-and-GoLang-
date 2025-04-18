@@ -1,53 +1,42 @@
 package repo
 
 import (
-	"errors"
-
-	"gorm.io/gorm"
-
+	"context"
 	"services/internal/auth/model"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/bson"
 )
 
-type AuthRepo struct {
-	db *gorm.DB
+type UserRepo struct {
+	collection *mongo.Collection
 }
 
-func NewAuthRepo(db *gorm.DB) *AuthRepo {
-	return &AuthRepo{db: db}
-}
-
-func (ap *AuthRepo) CreateUser(user *model.User) error {
-	if err := ap.db.Create(user).Error; err != nil {
-		return err
+func NewUserRepo(db *mongo.Database) *UserRepo {
+	return &UserRepo{
+		collection: db.Collection("users"),
 	}
-	return nil
 }
 
-func (ap *AuthRepo) GetUserByEmail(email string) (*model.User, error) {
-	var user model.User
-	if err := ap.db.Where("email = ?", email).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
-		}
+func (ur *UserRepo) GetUserByID(ctx context.Context, id primitive.ObjectID) (*model.User, error) {
+	var user *model.User
+	filter := bson.M{"_id": id}
+
+	if err := ur.collection.FindOne(ctx, filter).Decode(&user); err != nil {
 		return nil, err
 	}
-	return &user, nil
+
+	return user, nil
 }
 
-func (ap *AuthRepo) GetUserByID(userID int) (*model.User, error) {
-	var user model.User
-	if err := ap.db.First(&user, userID).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
-		}
-		return nil, err
+func (ur *UserRepo) PutUser(ctx context.Context, user model.User) error {
+	filter := bson.M{"_id", user.ID}
+	update := bson.M{
+		"$set": bson.M{
+			"email":        user.Email,
+			"password":     user.Password,
+			"lastMoveDate": user.LastMoveDate,
+		},
 	}
-	return &user, nil
-}
-
-func (ap *AuthRepo) UpdateLastMoveDate(userID int, lastMoveDate string) error {
-	if err := ap.db.Model(&model.User{}).Where("id = ?", userID).Update("last_move_date", lastMoveDate).Error; err != nil {
-		return err
-	}
-	return nil
 }

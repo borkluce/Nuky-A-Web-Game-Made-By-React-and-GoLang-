@@ -1,9 +1,16 @@
 package model
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
 type Province struct {
-	ID               int    `json:"id"`
-	ProvinceName     string `json:"province_name"`
-	ProvinceColorHex string `json:"province_color_hex"`
-	AttackCount      int    `json:"attack_count"`
-	SupportCount     int    `json:"support_count"`
+	ID               primitive.ObjectID `json:"ID" bson:"_id,omitempty"`
+	ProvinceName     string             `json:"provinceName"`
+	ProvinceColorHex string             `json:"provinceColorHex"`
+	AttackCount      int                `json:"attackCount"`
+	SupportCount     int                `json:"supportCount"`
+}
+
+func (p Province) MongoIDToStringID(mongoID primitive.ObjectID) (string, error) {
+	stringedID := mongoID.Hex()
+	return stringedID, nil
 }
