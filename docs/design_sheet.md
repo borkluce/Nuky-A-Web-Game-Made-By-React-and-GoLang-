@@ -23,6 +23,7 @@
    every move should be checked by recaptcha
 
    getAllProvinces()
+
    attack()
    support()
 ```
