@@ -72,19 +72,9 @@
     provinceColorHex: string
     attackCount: int
     supportCount: int
+    destroymentRound: int // -1 = notDestroyed
 
     updatedDate: Date
     deletedDate: Date
-}
-```
-
-#### game
-
-```js
-{
-   loserProvinces: Province[]
-
-   updatedDate: Date
-   deletedDate: Date
 }
 ```
