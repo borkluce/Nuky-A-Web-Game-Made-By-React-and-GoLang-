@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"api/pkg/auth/token"
+	"services/pkg/auth/token"
 
 	"github.com/gofiber/fiber/v2"
 )
