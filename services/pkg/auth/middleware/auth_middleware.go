@@ -1,29 +1,40 @@
 package middleware
 
 import (
-	"services/pkg/auth/token"
+	"context"
+	"net/http"
+	"strings"
 
-	"github.com/gofiber/fiber/v2"
+	"services/pkg/auth/token"
 )
 
-func AuthMiddleware(c *fiber.Ctx) error {
-	// Example: Extract token from headers
-	authHeader := c.Get("Authorization")
-	if authHeader == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Authorization header required"})
-	}
+type contextKey string
 
-	authHeader = authHeader[7:]
+// Exported so handlers can access the user info
+const UserContextKey = contextKey("user")
 
-	// Verify token
-	_, err := token.VerifyToken(authHeader)
-	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error":   "Invalid token",
-			"details": err.Error(),
-			"token":   authHeader,
-		})
-	}
+// AuthMiddleware validates the Authorization header and attaches user info to the request context
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			http.Error(w, "Authorization header required", http.StatusUnauthorized)
+			return
+		}
 
-	return c.Next()
+		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+		// Verify token (adjust based on your VerifyToken implementation)
+		claims, err := token.VerifyToken(tokenStr)
+		if err != nil {
+			http.Error(w, "Invalid token: "+err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		// Store claims (or user info) in context using custom key
+		ctx := context.WithValue(r.Context(), UserContextKey, claims)
+
+		// Continue with next handler, passing new context
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

@@ -37,6 +37,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+/*
 func main() {
 	http.HandleFunc("/ws", handleConnections)
 	fmt.Println("WebSocket server working on 8080 port...")
@@ -44,4 +45,4 @@ func main() {
 	if err != nil {
 		fmt.Println("Server cannot start:", err)
 	}
-}
+} */
