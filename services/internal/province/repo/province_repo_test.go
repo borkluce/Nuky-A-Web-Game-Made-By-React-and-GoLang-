@@ -18,8 +18,9 @@ func setupTestDB(t *testing.T) (*mongo.Database, func()) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Use a unique database name for tests to avoid conflicts
-	dbName := "test_provinces_db_" + primitive.NewObjectID().Hex()
+	// Use only the first 10 characters of the ObjectID
+	shortID := primitive.NewObjectID().Hex()[:10]
+	dbName := "test_" + shortID
 
 	uri := "mongodb+srv://vafaill_master:jqSqKsjGHSa8hlK1@cluster0.uuzqws6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
