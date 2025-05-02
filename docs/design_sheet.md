@@ -54,9 +54,11 @@
 
 ```js
 {
+   username: string, UNIQUE
    email: string, UNIQUE
-   password: hashed string
    lastMoveDate: Date
+
+   password: hashed string
 
    updatedDate: Date
    deletedDate: Date

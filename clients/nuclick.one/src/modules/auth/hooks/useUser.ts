@@ -4,13 +4,18 @@ import { create } from "zustand"
 import { CAxios } from "../../core/configs/cAxios"
 
 // Types
-import { LoginRequest, LoginResponse } from "../types/user.dtos"
+import {
+    LoginRequest,
+    LoginResponse,
+    RegisterRequest,
+    RegisterResponse,
+} from "../types/user.dtos"
 import { User } from "../types/user"
 
 interface useUserState {
     user: User | null
-    login: (loginRequest: LoginRequest) => Promise<LoginResponse>
-    // register: (registerRequest: RegisterRequest) => Promise<RegisterResponse>
+    login: (loginRequest: LoginRequest) => Promise<void>
+    register: (registerRequest: RegisterRequest) => Promise<void>
 }
 
 export const useUser = create<useUserState>((set, get) => ({
@@ -20,7 +25,12 @@ export const useUser = create<useUserState>((set, get) => ({
             "/auth/login",
             loginRequest
         )
-
-        return response.data
+        set({ user: get({ user }) })
+    },
+    register: async (registerRequest) => {
+        const response = await CAxios.post<RegisterRequest>(
+            "/auth/register",
+            registerRequest
+        )
     },
 }))
