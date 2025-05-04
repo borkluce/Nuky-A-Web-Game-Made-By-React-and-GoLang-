@@ -1,5 +1,5 @@
 export type Province = {
-    id: number
+    id: string
     provinceName: string
     provinceColorHex: string
     attackCount: number
