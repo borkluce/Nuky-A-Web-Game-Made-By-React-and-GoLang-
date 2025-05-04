@@ -1,17 +1,23 @@
 package service
 
 import (
+	// Standart packages
 	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	// Testing related packages
 	"net/http/httptest"
 	"testing"
 
+	// Testify
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	// Internal dependencies
 	"services/internal/province/model"
 )
 

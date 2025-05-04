@@ -1,3 +1,6 @@
+import React from "react"
+
+// Types
 import Alert from "../types/alert"
 
 const CAlert: React.FC<Alert> = ({ id, message, onClose, className, type }) => {
