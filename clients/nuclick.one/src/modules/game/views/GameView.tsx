@@ -1,14 +1,24 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 
 // Icons
 import { LuSword } from "react-icons/lu"
 import { FaShieldAlt } from "react-icons/fa"
 
+// Hooks
+import { useProvince } from '../../province/hooks/useProvince';
+import { useUser } from '../../auth/hooks/useUser';
+
 const GameView: React.FC = () => {
     const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
     const [iconPosition, setIconPosition] = useState({ x: 0, y: 0 })
     const [loading, setLoading] = useState<boolean>(false)
-
+    
+    // Get province functions and state from our hooks
+    const { attackProvince, supportProvince } = useProvince()
+    
+    // Assume we have a useUser hook to check for cooldown
+    const { cooldown } = useUser() // BERKAY BURASI ELLERİNDEN ÖPER
+    
     const handleCountryClick = (countryId: string, event: React.MouseEvent) => {
         console.log("Clicked country:", countryId)
 
@@ -18,6 +28,7 @@ const GameView: React.FC = () => {
 
         // Using mouse position for icon placement
         setIconPosition({
+            // I found these values byrandomly trying
             x: event.clientX - 425, // Offset to the left by 50px
             y: event.clientY - 20, // Offset upward by 20px
         })
@@ -28,8 +39,42 @@ const GameView: React.FC = () => {
 
     const handleIconClick = async (actionType: "attack" | "defend") => {
         if (selectedCountry && !loading) {
+            // Check for cooldown first
+            if (cooldown > 0) {
+                console.log(`You are in cooldown! Please wait ${cooldown} seconds.`)
+                return
+            }
+            
             setLoading(true)
-            console.log(`${actionType} action on country: ${selectedCountry}`)
+            
+            try {
+                let result;
+                
+                if (actionType === "attack") {
+                    // Call the backend to attack the province
+                    result = await attackProvince({ provinceID: selectedCountry })
+                    console.log("Attack result:", result)
+                } else {
+                    // Call the backend to support/defend the province
+                    result = await supportProvince({ provinceID: selectedCountry })
+                    console.log("Defend result:", result)
+                }
+                
+                if (result.isSuccess) {
+                    console.log(`${actionType} action successful!`)
+                    // We should update the UI or show a notification here
+                } else {
+                    console.log(`${actionType} action failed!`)
+                    // Handle failure case
+                }
+            } catch (error) {
+                console.error(`Error during ${actionType}:`, error)
+                // Show error notification
+            } finally {
+                setLoading(false)
+                // Optionally clear the selected country after action
+                setSelectedCountry(null)
+            }
         }
     }
 
@@ -59,6 +104,13 @@ const GameView: React.FC = () => {
                         </li>
                     ))} */}
                 </ul>
+                
+                {/* Show cooldown status if exists */}
+                {cooldown > 0 && (
+                    <div className="mt-4 p-2 bg-yellow-100 rounded-md">
+                        <p className="text-yellow-800">Cooldown: {cooldown}s remaining</p>
+                    </div>
+                )}
             </div>
 
             {/* SVG Map Area */}
@@ -80,10 +132,10 @@ const GameView: React.FC = () => {
                         <button
                             onClick={() => handleIconClick("attack")}
                             className={`bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors cursor-pointer ${
-                                loading ? "opacity-50 cursor-not-allowed" : ""
+                                loading || cooldown > 0 ? "opacity-50 cursor-not-allowed" : ""
                             }`}
-                            title="Attack"
-                            disabled={loading}
+                            title={cooldown > 0 ? "In cooldown" : "Attack"}
+                            disabled={loading || cooldown > 0}
                         >
                             <LuSword className="w-6 h-6" />
                         </button>
@@ -92,10 +144,10 @@ const GameView: React.FC = () => {
                         <button
                             onClick={() => handleIconClick("defend")}
                             className={`bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors cursor-pointer ${
-                                loading ? "opacity-50 cursor-not-allowed" : ""
+                                loading || cooldown > 0 ? "opacity-50 cursor-not-allowed" : ""
                             }`}
-                            title="Defend"
-                            disabled={loading}
+                            title={cooldown > 0 ? "In cooldown" : "Defend"}
+                            disabled={loading || cooldown > 0}
                         >
                             <FaShieldAlt className="w-6 h-6" />
                         </button>
@@ -105,6 +157,7 @@ const GameView: React.FC = () => {
         </div>
     )
 }
+
 
 function renderSVG(
     onCountryClick: (countryId: string, event: React.MouseEvent) => void
