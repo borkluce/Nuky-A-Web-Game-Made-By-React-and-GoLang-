@@ -19,3 +19,13 @@ export type RegisterRequest = {
 export type RegisterResponse = {
     token: string
 }
+
+// --------------------------------------------------------------------
+
+export type CooldownLeftInSecondsRequest = {
+    token: string
+}
+
+export type CooldownLeftInSecondsResponse = {
+    cooldownLeftInSeconds: string
+}

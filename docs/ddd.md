@@ -80,3 +80,7 @@
     deletedDate: Date
 }
 ```
+
+### Development flow
+
+type -> dto -> hook -> components -> view -> index.ts
