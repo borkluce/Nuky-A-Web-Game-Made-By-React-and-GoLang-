@@ -17,7 +17,7 @@ const GameView: React.FC = () => {
     const { attackProvince, supportProvince } = useProvince()
 
     // Assume we have a useUser hook to check for cooldown
-    const { cooldown } = useUser() // BERKAY BURASI ELLERİNDEN ÖPER
+    const { cooldown, isAllowedToMove, startCooldownTimer } = useUser() // BERKAY BURASI ELLERİNDEN ÖPER
 
     const handleCountryClick = (countryId: string, event: React.MouseEvent) => {
         console.log("Clicked country:", countryId)
@@ -40,7 +40,7 @@ const GameView: React.FC = () => {
     const handleIconClick = async (actionType: "attack" | "defend") => {
         if (selectedCountry && !loading) {
             // Check for cooldown first
-            if (cooldown > 0) {
+            if (!isAllowedToMove()) {
                 console.log(
                     `You are in cooldown! Please wait ${cooldown} seconds.`
                 )
@@ -68,6 +68,7 @@ const GameView: React.FC = () => {
 
                 if (result.isSuccess) {
                     console.log(`${actionType} action successful!`)
+                    startCooldownTimer()
                     // We should update the UI or show a notification here
                 } else {
                     console.log(`${actionType} action failed!`)
