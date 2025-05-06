@@ -14,7 +14,7 @@ import {
 } from "../types/user.dtos"
 import { User } from "../types/user"
 
-interface useUserState {
+interface useUserInterface {
     // Fields
     user: User | null
     coolDate: number // Datetime cooldown will be finished
@@ -30,6 +30,6 @@ interface useUserState {
     isAllowedToMove: () => boolean
 }
 
-export const useUser = create<useUserState>((set, get) => ({
+export const useUser = create<useUserInterface>((set, get) => ({
     user: null,
 }))
