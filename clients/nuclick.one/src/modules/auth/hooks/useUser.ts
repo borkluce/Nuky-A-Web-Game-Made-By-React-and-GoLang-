@@ -12,7 +12,9 @@ import {
     RegisterRequest,
     RegisterResponse,
 } from "../types/user.dtos"
-import { User, createEmptyUser } from "../types/user"
+import { User } from "../types/user"
+
+const DEFAULT_COOLDOWN_SECONDS = 3600 // 1 hour cooldown
 
 interface useUserInterface {
     // Fields
@@ -27,9 +29,13 @@ interface useUserInterface {
     ) => Promise<CooldownLeftInSecondsResponse>
     logout: () => void
     
+    // Move related
+    resetCooldownAfterMove: (seconds?: number) => void
+    
     // Behaviours
     isAllowedToMove: () => boolean
     updateCooldown: (seconds: number) => void
+    getRemainingCooldownSeconds: () => number
 }
 
 export const useUser = create<useUserInterface>()(
@@ -116,11 +122,52 @@ export const useUser = create<useUserInterface>()(
                         } 
                     })
                 }
+            },
+            
+            getRemainingCooldownSeconds: () => {
+                const { coolDate } = get()
+                const remaining = Math.max(0, (coolDate - Date.now()) / 1000)
+                return Math.ceil(remaining)
+            },
+            
+            resetCooldownAfterMove: async (seconds?: number) => {
+                // If seconds are provided, use them
+                // Otherwise, use default or request from server
+                if (seconds !== undefined) {
+                    get().updateCooldown(seconds)
+                    return
+                }
+                
+                try {
+                    // Option 1: Use a fixed cooldown
+                    // This is temporary. I will fix after backend is finished
+                    get().updateCooldown(DEFAULT_COOLDOWN_SECONDS)
+                    
+                    // Option 2: Request cooldown from server after move
+                    // const token = get().user?.token
+                    // if (token) {
+                    //    await get().cooldownLeftInSeconds({ token })
+                    // }
+                    
+                    // Update lastMoveDate
+                    if (get().user) {
+                        set({
+                            user: {
+                                ...get().user!,
+                                lastMoveDate: new Date()
+                            }
+                        })
+                    }
+                } catch (error) {
+                    console.error('Failed to reset cooldown:', error)
+                    // Fallback to default cooldown if server request fails
+                    get().updateCooldown(DEFAULT_COOLDOWN_SECONDS)
+                }
             }
         }),
         {
             name: 'user-storage',
-            partialize: (state) => ({ user: state.user }),
+            partialize: (state) => ({ user: state.user, coolDate: state.coolDate }),
         }
     )
 )
