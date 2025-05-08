@@ -36,10 +36,6 @@ interface useUserInterface {
     isAllowedToMove: () => boolean
     updateCooldown: (seconds: number) => void
     getRemainingCooldownSeconds: () => number
-
-    // Local Storage
-    saveToLocal: (user: User) => Promise<boolean>
-    loadFromLocal: () => Promise<User>
 }
 
 export const useUser = create<useUserInterface>()(
@@ -54,7 +50,7 @@ export const useUser = create<useUserInterface>()(
                         "/auth/login",
                         loginRequest
                     )
-                    const { token, user } = response.data
+                    const { user } = response.data
 
                     set({
                         user: {
@@ -77,7 +73,7 @@ export const useUser = create<useUserInterface>()(
                         "/auth/register",
                         registerRequest
                     )
-                    const { token, user } = response.data
+                    const { user } = response.data
 
                     set({
                         user: {
@@ -177,19 +173,9 @@ export const useUser = create<useUserInterface>()(
                     get().updateCooldown(DEFAULT_COOLDOWN_SECONDS)
                 }
             },
-
-            saveToLocal: async (user: User) => {
-                localStorage.setItem("user", JSON.stringify(user))
-                return true
-            },
-
-            loadFromLocal: async () => {
-                const user = localStorage.getItem("user")
-                return JSON.parse(user as string) as User
-            },
         }),
         {
-            name: "user-storage",
+            name: "user",
             partialize: (state) => ({
                 user: state.user,
                 coolDate: state.coolDate,
