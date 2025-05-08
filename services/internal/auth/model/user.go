@@ -7,8 +7,11 @@ import (
 )
 
 type User struct {
-	ID           primitive.ObjectID `json:"ID" bson:"_id,omitempty"`
-	Email        string             `json:"email" bson:"email"`
-	Password     string             `bson:"password"`
-	LastMoveDate time.Time          `json:"lastMoveDate" bson:"lastMoveDate"`
+	ID primitive.ObjectID `json:"ID" bson:"_id,omitempty"`
+
+	Username     string    `json:"username" bson:"username"`
+	Email        string    `json:"email" bson:"email"`
+	LastMoveDate time.Time `json:"lastMoveDate" bson:"lastMoveDate"`
+
+	Password string `bson:"password"`
 }
