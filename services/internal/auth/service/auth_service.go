@@ -7,9 +7,11 @@ import (
 	"services/internal/auth/repo"
 	"time"
 
+	"github.com/golang-jwt/jwt"
+	"github.com/kahleryasla/pkg/go/auth/middleware/nethttp"
+	"github.com/kahleryasla/pkg/go/auth/token"
 	"github.com/kahleryasla/pkg/go/log/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
@@ -80,7 +82,7 @@ func (as *AuthService) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	hashedPassword, err := token.HashPassword(req.Password)
 	if err != nil {
 		util.LogError("Failed to hash password: "+err.Error(), "AuthService.RegisterHandler", "")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -91,7 +93,7 @@ func (as *AuthService) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	user := model.User{
 		Username:     req.Username,
 		Email:        req.Email,
-		Password:     string(hashedPassword),
+		Password:     hashedPassword,
 		LastMoveDate: time.Now(),
 	}
 
@@ -107,8 +109,8 @@ func (as *AuthService) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	user.ID = id
 	user.Password = "" // Don't send back password
 
-	// Generate token
-	token, err := generateToken(user.ID.Hex())
+	// Generate JWT token
+	jwtToken, err := token.GenerateToken(user.ID.Hex())
 	if err != nil {
 		util.LogError("Failed to generate token: "+err.Error(), "AuthService.RegisterHandler", "")
 		http.Error(w, "Failed to generate authentication token", http.StatusInternalServerError)
@@ -119,7 +121,7 @@ func (as *AuthService) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	response := AuthResponse{
 		Success: true,
 		Message: "User registered successfully",
-		Token:   token,
+		Token:   jwtToken,
 		User:    &user,
 	}
 
@@ -158,7 +160,7 @@ func (as *AuthService) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+	if err := token.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
@@ -169,8 +171,8 @@ func (as *AuthService) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		util.LogError("Failed to update last move date: "+err.Error(), "AuthService.LoginHandler", "")
 	}
 
-	// Generate token
-	token, err := generateToken(user.ID.Hex())
+	// Generate JWT token
+	jwtToken, err := token.GenerateToken(user.ID.Hex())
 	if err != nil {
 		util.LogError("Failed to generate token: "+err.Error(), "AuthService.LoginHandler", "")
 		http.Error(w, "Failed to generate authentication token", http.StatusInternalServerError)
@@ -184,7 +186,7 @@ func (as *AuthService) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	response := AuthResponse{
 		Success: true,
 		Message: "Login successful",
-		Token:   token,
+		Token:   jwtToken,
 		User:    user,
 	}
 
@@ -201,21 +203,36 @@ func (as *AuthService) VerifyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get token from Authorization header
-	token := r.Header.Get("Authorization")
-	if token == "" {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
 		http.Error(w, "Authorization token required", http.StatusUnauthorized)
 		return
 	}
 
 	// Remove "Bearer " prefix if present
-	if len(token) > 7 && token[:7] == "Bearer " {
-		token = token[7:]
+	tokenStr := authHeader
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		tokenStr = authHeader[7:]
 	}
 
 	// Verify token
-	userID, err := verifyToken(token)
+	parsedToken, err := token.VerifyToken(tokenStr)
 	if err != nil {
 		http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+		return
+	}
+
+	// Extract claims from token
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	if !ok || !parsedToken.Valid {
+		http.Error(w, "Invalid token claims", http.StatusUnauthorized)
+		return
+	}
+
+	// Extract user ID from claims
+	userID, ok := claims["userName"].(string)
+	if !ok {
+		http.Error(w, "Invalid user ID in token", http.StatusBadRequest)
 		return
 	}
 
@@ -247,18 +264,10 @@ func (as *AuthService) VerifyHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// Helper functions for token generation and verification
-func generateToken(userID string) (string, error) {
-	// TODO: Implement proper JWT token generation here
-	// For now, we'll return a simple token for demonstration
-	return "token_" + userID, nil
-}
-
-func verifyToken(token string) (string, error) {
-	// TODO: Implement proper JWT token verification here
-	// For now, we'll extract the userID from the token for demonstration
-	if len(token) <= 6 || token[:6] != "token_" {
-		return "", http.ErrNoCookie // Using ErrNoCookie as a placeholder for invalid token error
-	}
-	return token[6:], nil
+// AuthMiddleware can be used to require authentication for routes
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Use the middleware from the imported package
+		nethttp.AuthMiddleware(next).ServeHTTP(w, r)
+	})
 }
