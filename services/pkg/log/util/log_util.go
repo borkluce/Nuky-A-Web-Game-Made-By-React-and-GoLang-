@@ -1,94 +1,141 @@
 package util
 
 import (
-	"fmt"
 	"runtime"
 	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-const (
-	reset  = "\033[0m"
-	red    = "\033[31m"
-	green  = "\033[32m"
-	yellow = "\033[33m"
-	blue   = "\033[34m"
-	orange = "\033[38;5;208m"
-)
+// Logger is a wrapper around zap logger
+var Logger *zap.Logger
 
-// LogError logs an error message in red, with a timestamp, file, and line number
+// Initialize sets up the zap logger with development configuration
+func Initialize() {
+	config := zap.NewDevelopmentConfig()
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	config.EncoderConfig.TimeKey = "timestamp"
+	config.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
+	logger, _ := config.Build()
+	Logger = logger
+}
+
+// LogError logs an error message with a timestamp, file, and line number
 func LogError(str string, location string, processID string) {
-	// Get the current timestamp
-	timestamp := time.Now().Format("2006-01-02 15:04:05")
-
-	// Get file, line number, and function name of where LogError was called
+	// Get file, line number of where LogError was called
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		file = "???"
 		line = 0
 	}
 
-	// Print the log with red color for error and line spacing
-	if location != "" {
-		fmt.Printf("\n%s%s | %s%s", red, location, processID, reset)
-		fmt.Printf("\n%sERROR: %s ==> %s:%d %s%s\n", red, timestamp, file, line, str, reset)
-	} else {
-		fmt.Printf("\n%sERROR: %s ==> %s:%d %s%s\n", red, timestamp, file, line, str, reset)
-
+	// Create a new logger if it hasn't been initialized
+	if Logger == nil {
+		Initialize()
 	}
+
+	// Add contextual fields
+	fields := []zapcore.Field{
+		zap.String("file", file),
+		zap.Int("line", line),
+		zap.String("timestamp", time.Now().Format("2006-01-02 15:04:05")),
+	}
+
+	// Add location and processID if provided
+	if location != "" {
+		fields = append(fields, zap.String("location", location))
+		fields = append(fields, zap.String("processID", processID))
+	}
+
+	// Log the error with context
+	Logger.Error(str, fields...)
 }
 
-// LogSuccess logs an informational message in green, with a timestamp
+// LogSuccess logs a success message with a timestamp
 func LogSuccess(str string, location string, processID string) {
-	// Get the current timestamp
-	timestamp := time.Now().Format("2006-01-02 15:04:05")
-
-	// Print the log with green color for success and line spacing
-	if location != "" {
-		fmt.Printf("\n%s%s | %s%s", green, location, processID, reset)
-		fmt.Printf("\n%sSUCCESS: %s ==> %s%s\n", green, timestamp, str, reset)
-	} else {
-		fmt.Printf("\n%sSUCCESS: %s ==> %s%s\n", green, timestamp, str, reset)
+	// Create a new logger if it hasn't been initialized
+	if Logger == nil {
+		Initialize()
 	}
+
+	// Add contextual fields
+	fields := []zapcore.Field{
+		zap.String("timestamp", time.Now().Format("2006-01-02 15:04:05")),
+	}
+
+	// Add location and processID if provided
+	if location != "" {
+		fields = append(fields, zap.String("location", location))
+		fields = append(fields, zap.String("processID", processID))
+	}
+
+	// Log the success message with context
+	Logger.Info(str, fields...)
 }
 
-// LogWarn logs a warning message in orange, with a timestamp
+// LogWarn logs a warning message with a timestamp
 func LogWarn(body string, location string, processID string) {
-	// Get the current timestamp
-	timestamp := time.Now().Format("2006-01-02 15:04:05")
-
-	// Print the log with orange color for warning and line spacing
-	if location != "" {
-		fmt.Printf("\n%s%s | %s%s", orange, location, processID, reset)
-		fmt.Printf("\n%sWARNING: %s ==> %s%s\n", orange, timestamp, body, reset)
-		return
-	} else {
-		fmt.Printf("\n%sWARNING: %s ==> %s%s\n", orange, timestamp, body, reset)
+	// Create a new logger if it hasn't been initialized
+	if Logger == nil {
+		Initialize()
 	}
+
+	// Add contextual fields
+	fields := []zapcore.Field{
+		zap.String("timestamp", time.Now().Format("2006-01-02 15:04:05")),
+	}
+
+	// Add location and processID if provided
+	if location != "" {
+		fields = append(fields, zap.String("location", location))
+		fields = append(fields, zap.String("processID", processID))
+	}
+
+	// Log the warning message with context
+	Logger.Warn(body, fields...)
 }
 
-// LogTask logs a debug message in yellow, with a timestamp
+// LogTask logs a task message with a timestamp
 func LogTask(str string, location string, processID string) {
-	// Get the current timestamp
-	timestamp := time.Now().Format("2006-01-02 15:04:05")
-
-	// Print the log with yellow color for debug and line spacing
-	if location != "" {
-		fmt.Printf("\n%s%s | %s%s", yellow, location, processID, reset)
-		fmt.Printf("\n%sTASK: %s ==> %s%s\n", yellow, timestamp, str, reset)
-	} else {
-		fmt.Printf("\n%sTAKS: %s ==> %s%s\n", yellow, timestamp, str, reset)
+	// Create a new logger if it hasn't been initialized
+	if Logger == nil {
+		Initialize()
 	}
+
+	// Add contextual fields
+	fields := []zapcore.Field{
+		zap.String("timestamp", time.Now().Format("2006-01-02 15:04:05")),
+	}
+
+	// Add location and processID if provided
+	if location != "" {
+		fields = append(fields, zap.String("location", location))
+		fields = append(fields, zap.String("processID", processID))
+	}
+
+	// Log the task message with context (using Debug level)
+	Logger.Debug(str, fields...)
 }
 
+// LogInfo logs an informational message with a timestamp
 func LogInfo(str string, location string, processID string) {
-	// Get the current timestamp
-	timestamp := time.Now().Format("2006-01-02 15:04:05")
-
-	// Print the log with yellow color for debug and line spacing
-	if location != "" {
-		fmt.Printf("\n%s | %s", location, processID)
-		fmt.Printf("\nTASK: %s ==> %s\n", timestamp, str)
-	} else {
-		fmt.Printf("\nTAKS: %s ==> %s\n", timestamp, str)
+	// Create a new logger if it hasn't been initialized
+	if Logger == nil {
+		Initialize()
 	}
+
+	// Add contextual fields
+	fields := []zapcore.Field{
+		zap.String("timestamp", time.Now().Format("2006-01-02 15:04:05")),
+	}
+
+	// Add location and processID if provided
+	if location != "" {
+		fields = append(fields, zap.String("location", location))
+		fields = append(fields, zap.String("processID", processID))
+	}
+
+	// Log the info message with context
+	Logger.Info(str, fields...)
 }
