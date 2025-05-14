@@ -127,7 +127,7 @@ func initServices() {
 
 func setupDBConnection() {
 	var err error
-	mongoClient, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(os.Getenv("DB")))
+	mongoClient, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(os.Getenv("CONNECTION_STRING")))
 	if err != nil {
 		panic(err)
 	}
