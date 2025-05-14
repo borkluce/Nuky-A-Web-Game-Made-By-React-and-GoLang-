@@ -12,28 +12,31 @@ const GameView: React.FC = () => {
     const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
     const [iconPosition, setIconPosition] = useState({ x: 0, y: 0 })
     const [loading, setLoading] = useState<boolean>(false)
+    const [cooldownSeconds, setCooldownSeconds] = useState<number>(0)
 
-    // Get province functions and state from our hooks
     const { attackProvince, supportProvince } = useProvince()
+    const { isAllowedToMove, resetCooldownAfterMove, getRemainingCooldownSeconds } = useUser()
 
-    // Assume we have a useUser hook to check for cooldown
-    const { cooldown, isAllowedToMove, startCooldownTimer } = useUser() // BERKAY BURASI ELLERİNDEN ÖPER
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCooldownSeconds(getRemainingCooldownSeconds())
+        }, 1000)
 
+        return () => clearInterval(interval)
+    }, [getRemainingCooldownSeconds])
+
+    // Get the position of the clicked SVG element
     const handleCountryClick = (countryId: string, event: React.MouseEvent) => {
-        console.log("Clicked country:", countryId)
-
-        // Get the position of the clicked SVG element
         const svgElement = event.currentTarget as SVGElement
         const boundingRect = svgElement.getBoundingClientRect()
 
         // Using mouse position for icon placement
         setIconPosition({
             // I found these values byrandomly trying
-            x: event.clientX - 425, // Offset to the left by 50px
-            y: event.clientY - 20, // Offset upward by 20px
+            x: event.clientX - 425,
+            y: event.clientY - 20,
         })
 
-        // Set the selected country
         setSelectedCountry(countryId)
     }
 
@@ -42,7 +45,7 @@ const GameView: React.FC = () => {
             // Check for cooldown first
             if (!isAllowedToMove()) {
                 console.log(
-                    `You are in cooldown! Please wait ${cooldown} seconds.`
+                    `You are in cooldown! Please wait ${cooldownSeconds} seconds.`
                 )
                 return
             }
@@ -54,32 +57,23 @@ const GameView: React.FC = () => {
 
                 if (actionType === "attack") {
                     // Call the backend to attack the province
-                    result = await attackProvince({
-                        provinceID: selectedCountry,
-                    })
-                    console.log("Attack result:", result)
+                    result = await attackProvince({ provinceID: selectedCountry })
                 } else {
-                    // Call the backend to support/defend the province
-                    result = await supportProvince({
-                        provinceID: selectedCountry,
-                    })
-                    console.log("Defend result:", result)
+                    // Call the backend to support the province
+                    result = await supportProvince({ provinceID: selectedCountry })
                 }
 
                 if (result.isSuccess) {
-                    console.log(`${actionType} action successful!`)
-                    startCooldownTimer()
-                    // We should update the UI or show a notification here
+                    console.log(`${actionType} successful!`)
+                    await resetCooldownAfterMove()
                 } else {
-                    console.log(`${actionType} action failed!`)
-                    // Handle failure case
+                    console.log(`${actionType} failed!`)
                 }
             } catch (error) {
                 console.error(`Error during ${actionType}:`, error)
-                // Show error notification
             } finally {
                 setLoading(false)
-                // Optionally clear the selected country after action
+                // Setting selected country null (optional)
                 setSelectedCountry(null)
             }
         }
@@ -92,8 +86,7 @@ const GameView: React.FC = () => {
                 <h2 className="text-black text-lg font-bold mb-4">
                     Top 5 Dangerous States
                 </h2>
-                <ul>
-                    {/* {topStates.map((state, index) => (
+                <ul>{/* {topStates.map((state, index) => (
                         <li key={state.id} className="text-black mb-2">
                             <span className="font-semibold">
                                 {index + 1}. {state.state_name}
@@ -109,63 +102,67 @@ const GameView: React.FC = () => {
                                 </span>
                             )}
                         </li>
-                    ))} */}
-                </ul>
+                    ))} */}</ul>
 
-                {/* Show cooldown status if exists */}
-                {cooldown > 0 && (
+                {cooldownSeconds > 0 && (
                     <div className="mt-4 p-2 bg-yellow-100 rounded-md">
                         <p className="text-yellow-800">
-                            Cooldown: {cooldown}s remaining
+                            Cooldown: {cooldownSeconds}s remaining
                         </p>
                     </div>
                 )}
             </div>
 
-            {/* SVG Map Area */}
-            <div className="flex-1 flex items-center justify-center relative">
-                {renderSVG(handleCountryClick)}
+            {/* SVG Map Area + Bottom Panel */}
+            <div className="flex-1 flex flex-col relative bg-gray-100">
+                <div className="flex-1 flex items-center justify-center relative">
+                    {renderSVG(handleCountryClick)}
 
-                {/* Icons that appear on click */}
-                {selectedCountry && (
-                    <div
-                        className="absolute flex gap-2"
-                        style={{
-                            left: iconPosition.x + "px",
-                            top: iconPosition.y + "px",
-                            transform: "translate(0, -20%)",
-                            zIndex: 10,
-                        }}
-                    >
-                        {/* Attack Icon (Sword) */}
-                        <button
-                            onClick={() => handleIconClick("attack")}
-                            className={`bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors cursor-pointer ${
-                                loading || cooldown > 0
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                            }`}
-                            title={cooldown > 0 ? "In cooldown" : "Attack"}
-                            disabled={loading || cooldown > 0}
+                    {selectedCountry && (
+                        <div
+                            className="absolute flex gap-2"
+                            style={{
+                                left: iconPosition.x + "px",
+                                top: iconPosition.y + "px",
+                                transform: "translate(0, -20%)",
+                                zIndex: 10,
+                            }}
                         >
-                            <LuSword className="w-6 h-6" />
-                        </button>
+                            {/* Attack icon sword*/}
+                            <button
+                                onClick={() => handleIconClick("attack")}
+                                className={`bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors cursor-pointer ${
+                                    loading || cooldownSeconds > 0
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : ""
+                                }`}
+                                title={cooldownSeconds > 0 ? "In cooldown" : "Attack"}
+                                disabled={loading || cooldownSeconds > 0}
+                            >
+                                <LuSword className="w-6 h-6" />
+                            </button>
 
-                        {/* Defend Icon (Shield) */}
-                        <button
-                            onClick={() => handleIconClick("defend")}
-                            className={`bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors cursor-pointer ${
-                                loading || cooldown > 0
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                            }`}
-                            title={cooldown > 0 ? "In cooldown" : "Defend"}
-                            disabled={loading || cooldown > 0}
-                        >
-                            <FaShieldAlt className="w-6 h-6" />
-                        </button>
-                    </div>
-                )}
+                            {/* Support icon shield*/}
+                            <button
+                                onClick={() => handleIconClick("defend")}
+                                className={`bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors cursor-pointer ${
+                                    loading || cooldownSeconds > 0
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : ""
+                                }`}
+                                title={cooldownSeconds > 0 ? "In cooldown" : "Defend"}
+                                disabled={loading || cooldownSeconds > 0}
+                            >
+                                <FaShieldAlt className="w-6 h-6" />
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Bottom Info Panel */}
+                <div className="bg-white p-4 border-t h-[120px]">
+                    <p className="text-gray-500">Buraya bilgiler eklenecek...</p>
+                </div>
             </div>
         </div>
     )
