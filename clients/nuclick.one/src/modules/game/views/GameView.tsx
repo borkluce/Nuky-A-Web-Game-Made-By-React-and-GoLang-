@@ -82,28 +82,12 @@ const GameView: React.FC = () => {
     return (
         <div className="flex flex-row w-screen h-screen overflow-hidden">
             {/* Left Panel */}
-            <div className="bg-white/50 border-r-[5px] min-w-[390px] h-screen left-0 p-8">
+            <div className="bg-white/50 border-r-[5px] min-w-[390px] h-full left-0 p-8">
                 <h2 className="text-black text-lg font-bold mb-4">
                     Top 5 Dangerous States
                 </h2>
-                <ul>{/* {topStates.map((state, index) => (
-                        <li key={state.id} className="text-black mb-2">
-                            <span className="font-semibold">
-                                {index + 1}. {state.state_name}
-                            </span>{" "}
-                            -{" "}
-                            <span className="text-red-500">
-                                {state.attack_count} Damages
-                            </span>
-                            {state.support_count > 0 && (
-                                <span className="text-blue-500">
-                                    {" "}
-                                    / {state.support_count} Supports
-                                </span>
-                            )}
-                        </li>
-                    ))} */}</ul>
-
+                <ul>{/* topStates.map... */}</ul>
+    
                 {cooldownSeconds > 0 && (
                     <div className="mt-4 p-2 bg-yellow-100 rounded-md">
                         <p className="text-yellow-800">
@@ -112,12 +96,13 @@ const GameView: React.FC = () => {
                     </div>
                 )}
             </div>
-
-            {/* SVG Map Area + Bottom Panel */}
-            <div className="flex-1 flex flex-col relative bg-gray-100">
-                <div className="flex-1 flex items-center justify-center relative">
+    
+            {/* Right Side: Map + Bottom Panel */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Map Area */}
+                <div className="flex-1 relative overflow-hidden">
                     {renderSVG(handleCountryClick)}
-
+    
                     {selectedCountry && (
                         <div
                             className="absolute flex gap-2"
@@ -128,7 +113,6 @@ const GameView: React.FC = () => {
                                 zIndex: 10,
                             }}
                         >
-                            {/* Attack icon sword*/}
                             <button
                                 onClick={() => handleIconClick("attack")}
                                 className={`bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors cursor-pointer ${
@@ -141,8 +125,7 @@ const GameView: React.FC = () => {
                             >
                                 <LuSword className="w-6 h-6" />
                             </button>
-
-                            {/* Support icon shield*/}
+    
                             <button
                                 onClick={() => handleIconClick("defend")}
                                 className={`bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors cursor-pointer ${
@@ -158,14 +141,14 @@ const GameView: React.FC = () => {
                         </div>
                     )}
                 </div>
-
+    
                 {/* Bottom Info Panel */}
-                <div className="bg-white p-4 border-t h-[120px]">
-                    <p className="text-gray-500">Buraya bilgiler eklenecek...</p>
+                <div className="bg-white p-4 border-t h-[120px] shrink-0">
+                    <p className="text-gray-500">There will be time left for nuke info and cooldown info here...</p>
                 </div>
             </div>
         </div>
-    )
+    )    
 }
 
 function renderSVG(
