@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+
 	auth_repo "services/internal/auth/repo"
 	auth_service "services/internal/auth/service"
+
 	province_repo "services/internal/province/repo"
 	province_service "services/internal/province/service"
 
 	"github.com/joho/godotenv"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -33,6 +36,8 @@ var (
 	userRepo     *auth_repo.UserRepo
 	provinceRepo *province_repo.ProvinceRepo
 )
+
+// --------------------------------------------------------------------
 
 func init() {
 	envType := os.Getenv("ENV")
@@ -67,6 +72,8 @@ func init() {
 		fmt.Println(dir)
 	}
 }
+
+// --------------------------------------------------------------------
 
 func main() {
 	// Create a new ServeMux
@@ -106,10 +113,7 @@ func initRepos() {
 	// Initialize repositories with database client
 	db := mongoClient.Database("services_db")
 
-	// User repository
 	userRepo = auth_repo.NewUserRepo(db.Collection("users"))
-
-	// Province repository
 	provinceRepo = province_repo.NewProvinceRepo(db.Collection("provinces"))
 
 	util.LogSuccess("Repositories initialized", "main.initRepos()", "")
@@ -144,9 +148,9 @@ func setupDBConnection() {
 
 func setupRoutes(mux *http.ServeMux) {
 	// Auth routes
-	mux.HandleFunc("/api/auth/register", authService.RegisterHandler)
-	mux.HandleFunc("/api/auth/login", authService.LoginHandler)
-	mux.HandleFunc("/api/auth/verify", authService.VerifyHandler)
+	mux.HandleFunc("/api/auth/register", authService.Register)
+	mux.HandleFunc("/api/auth/login", authService.Login)
+	mux.HandleFunc("/api/auth/verify", authService.Verify)
 
 	// Province routes
 	mux.HandleFunc("/api/provinces", provinceService.GetAllProvinces)

@@ -20,11 +20,11 @@ func NewProvinceService(repo *repo.ProvinceRepo) *ProvinceService {
 }
 
 // GetAllProvinces returns all provinces as JSON
-func (ph *ProvinceService) GetAllProvinces(w http.ResponseWriter, r *http.Request) {
+func (ps *ProvinceService) GetAllProvinces(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	provinces, err := ph.repo.GetAll(ctx)
+	provinces, err := ps.repo.GetAll(ctx)
 	if err != nil {
 		http.Error(w, "Failed to get all provinces", http.StatusInternalServerError)
 		return
@@ -35,17 +35,17 @@ func (ph *ProvinceService) GetAllProvinces(w http.ResponseWriter, r *http.Reques
 }
 
 // AttackProvince increases attack count by 1
-func (ph *ProvinceService) AttackProvince(w http.ResponseWriter, r *http.Request) {
-	ph.updateProvinceCount(w, r, true)
+func (ps *ProvinceService) AttackProvince(w http.ResponseWriter, r *http.Request) {
+	ps.updateProvinceCount(w, r, true)
 }
 
 // SupportProvince increases support count by 1
-func (ph *ProvinceService) SupportProvince(w http.ResponseWriter, r *http.Request) {
-	ph.updateProvinceCount(w, r, false)
+func (ps *ProvinceService) SupportProvince(w http.ResponseWriter, r *http.Request) {
+	ps.updateProvinceCount(w, r, false)
 }
 
 // shared logic for updating attack or support count
-func (ph *ProvinceService) updateProvinceCount(w http.ResponseWriter, r *http.Request, isAttack bool) {
+func (ps *ProvinceService) updateProvinceCount(w http.ResponseWriter, r *http.Request, isAttack bool) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
@@ -63,7 +63,7 @@ func (ph *ProvinceService) updateProvinceCount(w http.ResponseWriter, r *http.Re
 	}
 
 	// Call repo's UpdateProvince
-	if err := ph.repo.UpdateProvinceByID(ctx, id, isAttack); err != nil {
+	if err := ps.repo.UpdateProvinceByID(ctx, id, isAttack); err != nil {
 		http.Error(w, "Failed to update province", http.StatusInternalServerError)
 		return
 	}
