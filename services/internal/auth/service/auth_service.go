@@ -1,17 +1,18 @@
 package service
 
 import (
+	// Standart
 	"encoding/json"
 	"net/http"
-	"services/internal/auth/model"
-	"services/internal/auth/repo"
 	"time"
 
-	"github.com/golang-jwt/jwt"
-	"github.com/kahleryasla/pkg/go/auth/middleware/nethttp"
+	// Internal
+	"services/internal/auth/model"
+	"services/internal/auth/repo"
+
+	// Third
 	"github.com/kahleryasla/pkg/go/auth/token"
 	"github.com/kahleryasla/pkg/go/log/util"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type AuthService struct {
@@ -24,29 +25,10 @@ func NewAuthService(userRepo *repo.UserRepo) *AuthService {
 	}
 }
 
-// RegisterRequest represents the data needed for user registration
-type RegisterRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-// LoginRequest represents the data needed for user login
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-// AuthResponse represents the response for auth operations
-type AuthResponse struct {
-	Success bool        `json:"success"`
-	Message string      `json:"message"`
-	Token   string      `json:"token,omitempty"`
-	User    *model.User `json:"user,omitempty"`
-}
+// Services --------------------------------------------------------------------
 
 // RegisterHandler handles user registration
-func (as *AuthService) RegisterHandler(w http.ResponseWriter, r *http.Request) {
+func (as AuthService) Register(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -54,7 +36,7 @@ func (as *AuthService) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse request body
-	var req RegisterRequest
+	var req model.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		util.LogError("Failed to decode request body: "+err.Error(), "AuthService.RegisterHandler", "")
 		http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -118,11 +100,8 @@ func (as *AuthService) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send response
-	response := AuthResponse{
-		Success: true,
-		Message: "User registered successfully",
-		Token:   jwtToken,
-		User:    &user,
+	response := model.RegisterResponse{
+		Token: jwtToken,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -130,8 +109,10 @@ func (as *AuthService) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// --------------------------------------------------------------------
+
 // LoginHandler handles user login
-func (as *AuthService) LoginHandler(w http.ResponseWriter, r *http.Request) {
+func (as AuthService) Login(w http.ResponseWriter, r *http.Request) {
 	// Only allow POST method
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -139,7 +120,7 @@ func (as *AuthService) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse request body
-	var req LoginRequest
+	var req model.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		util.LogError("Failed to decode request body: "+err.Error(), "AuthService.LoginHandler", "")
 		http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -183,91 +164,10 @@ func (as *AuthService) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	user.Password = ""
 
 	// Send response
-	response := AuthResponse{
-		Success: true,
-		Message: "Login successful",
-		Token:   jwtToken,
-		User:    user,
+	response := model.LoginResponse{
+		Token: jwtToken,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
-}
-
-// VerifyHandler handles token verification
-func (as *AuthService) VerifyHandler(w http.ResponseWriter, r *http.Request) {
-	// Only allow GET method
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Get token from Authorization header
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "Authorization token required", http.StatusUnauthorized)
-		return
-	}
-
-	// Remove "Bearer " prefix if present
-	tokenStr := authHeader
-	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
-		tokenStr = authHeader[7:]
-	}
-
-	// Verify token
-	parsedToken, err := token.VerifyToken(tokenStr)
-	if err != nil {
-		http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
-		return
-	}
-
-	// Extract claims from token
-	claims, ok := parsedToken.Claims.(jwt.MapClaims)
-	if !ok || !parsedToken.Valid {
-		http.Error(w, "Invalid token claims", http.StatusUnauthorized)
-		return
-	}
-
-	// Extract user ID from claims
-	userID, ok := claims["userName"].(string)
-	if !ok {
-		http.Error(w, "Invalid user ID in token", http.StatusBadRequest)
-		return
-	}
-
-	// Convert string ID to ObjectID
-	objectID, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
-		return
-	}
-
-	// Get user from database
-	user, err := as.userRepo.GetUserByID(r.Context(), objectID)
-	if err != nil {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return
-	}
-
-	// Remove password from response
-	user.Password = ""
-
-	// Send response
-	response := AuthResponse{
-		Success: true,
-		Message: "Token verified",
-		User:    user,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-// AuthMiddleware can be used to require authentication for routes
-func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Use the middleware from the imported package
-		nethttp.AuthMiddleware(next).ServeHTTP(w, r)
-	})
 }

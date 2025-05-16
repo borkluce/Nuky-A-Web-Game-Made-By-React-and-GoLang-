@@ -15,7 +15,11 @@ const GameView: React.FC = () => {
     const [cooldownSeconds, setCooldownSeconds] = useState<number>(0)
 
     const { attackProvince, supportProvince } = useProvince()
-    const { isAllowedToMove, resetCooldownAfterMove, getRemainingCooldownSeconds } = useUser()
+    const {
+        isAllowedToMove,
+        resetCooldownAfterMove,
+        getRemainingCooldownSeconds,
+    } = useUser()
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -57,13 +61,17 @@ const GameView: React.FC = () => {
 
                 if (actionType === "attack") {
                     // Call the backend to attack the province
-                    result = await attackProvince({ provinceID: selectedCountry })
+                    result = await attackProvince({
+                        province_ID: selectedCountry,
+                    })
                 } else {
                     // Call the backend to support the province
-                    result = await supportProvince({ provinceID: selectedCountry })
+                    result = await supportProvince({
+                        province_ID: selectedCountry,
+                    })
                 }
 
-                if (result.isSuccess) {
+                if (result.is_success) {
                     console.log(`${actionType} successful!`)
                     await resetCooldownAfterMove()
                 } else {
@@ -87,7 +95,7 @@ const GameView: React.FC = () => {
                     Top 5 Dangerous States
                 </h2>
                 <ul>{/* topStates.map... */}</ul>
-    
+
                 {cooldownSeconds > 0 && (
                     <div className="mt-4 p-2 bg-yellow-100 rounded-md">
                         <p className="text-yellow-800">
@@ -96,13 +104,13 @@ const GameView: React.FC = () => {
                     </div>
                 )}
             </div>
-    
+
             {/* Right Side: Map + Bottom Panel */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Map Area */}
                 <div className="flex-1 relative overflow-hidden">
                     {renderSVG(handleCountryClick)}
-    
+
                     {selectedCountry && (
                         <div
                             className="absolute flex gap-2"
@@ -120,12 +128,16 @@ const GameView: React.FC = () => {
                                         ? "opacity-50 cursor-not-allowed"
                                         : ""
                                 }`}
-                                title={cooldownSeconds > 0 ? "In cooldown" : "Attack"}
+                                title={
+                                    cooldownSeconds > 0
+                                        ? "In cooldown"
+                                        : "Attack"
+                                }
                                 disabled={loading || cooldownSeconds > 0}
                             >
                                 <LuSword className="w-6 h-6" />
                             </button>
-    
+
                             <button
                                 onClick={() => handleIconClick("defend")}
                                 className={`bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors cursor-pointer ${
@@ -133,7 +145,11 @@ const GameView: React.FC = () => {
                                         ? "opacity-50 cursor-not-allowed"
                                         : ""
                                 }`}
-                                title={cooldownSeconds > 0 ? "In cooldown" : "Defend"}
+                                title={
+                                    cooldownSeconds > 0
+                                        ? "In cooldown"
+                                        : "Defend"
+                                }
                                 disabled={loading || cooldownSeconds > 0}
                             >
                                 <FaShieldAlt className="w-6 h-6" />
@@ -141,14 +157,17 @@ const GameView: React.FC = () => {
                         </div>
                     )}
                 </div>
-    
+
                 {/* Bottom Info Panel */}
                 <div className="bg-white p-4 border-t h-[120px] shrink-0">
-                    <p className="text-gray-500">There will be time left for nuke info and cooldown info here...</p>
+                    <p className="text-gray-500">
+                        There will be time left for nuke info and cooldown info
+                        here...
+                    </p>
                 </div>
             </div>
         </div>
-    )    
+    )
 }
 
 function renderSVG(

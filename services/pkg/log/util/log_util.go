@@ -45,7 +45,7 @@ func LogError(str string, location string, processID string) {
 	// Add location and processID if provided
 	if location != "" {
 		fields = append(fields, zap.String("location", location))
-		fields = append(fields, zap.String("processID", processID))
+		fields = append(fields, zap.String("process_ID", processID))
 	}
 
 	// Log the error with context
@@ -67,7 +67,7 @@ func LogSuccess(str string, location string, processID string) {
 	// Add location and processID if provided
 	if location != "" {
 		fields = append(fields, zap.String("location", location))
-		fields = append(fields, zap.String("processID", processID))
+		fields = append(fields, zap.String("process_ID", processID))
 	}
 
 	// Log the success message with context
@@ -89,7 +89,7 @@ func LogWarn(body string, location string, processID string) {
 	// Add location and processID if provided
 	if location != "" {
 		fields = append(fields, zap.String("location", location))
-		fields = append(fields, zap.String("processID", processID))
+		fields = append(fields, zap.String("process_ID", processID))
 	}
 
 	// Log the warning message with context
@@ -108,10 +108,10 @@ func LogTask(str string, location string, processID string) {
 		zap.String("timestamp", time.Now().Format("2006-01-02 15:04:05")),
 	}
 
-	// Add location and processID if provided
+	// Add location and process_ID if provided
 	if location != "" {
 		fields = append(fields, zap.String("location", location))
-		fields = append(fields, zap.String("processID", processID))
+		fields = append(fields, zap.String("process_ID", processID))
 	}
 
 	// Log the task message with context (using Debug level)
@@ -133,7 +133,7 @@ func LogInfo(str string, location string, processID string) {
 	// Add location and processID if provided
 	if location != "" {
 		fields = append(fields, zap.String("location", location))
-		fields = append(fields, zap.String("processID", processID))
+		fields = append(fields, zap.String("process_ID", processID))
 	}
 
 	// Log the info message with context

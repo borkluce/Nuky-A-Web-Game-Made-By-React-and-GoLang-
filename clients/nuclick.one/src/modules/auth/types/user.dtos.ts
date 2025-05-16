@@ -6,11 +6,6 @@ export type LoginRequest = {
 
 export type LoginResponse = {
     token: string
-    user: {
-        username: string
-        email: string
-        lastMoveDate: string  // ISO date string from API
-    }
 }
 
 // --------------------------------------------------------------------
@@ -23,11 +18,6 @@ export type RegisterRequest = {
 
 export type RegisterResponse = {
     token: string
-    user: {
-        username: string
-        email: string
-        lastMoveDate: string  // ISO date string from API
-    }
 }
 
 // --------------------------------------------------------------------
@@ -37,13 +27,5 @@ export type CooldownLeftInSecondsRequest = {
 }
 
 export type CooldownLeftInSecondsResponse = {
-    cooldownLeftInSeconds: number
-}
-
-// --------------------------------------------------------------------
-
-export type UserResponse = {
-    username: string
-    email: string
-    lastMoveDate: string  // ISO date string from API
+    cooldown_left_in_seconds: number
 }

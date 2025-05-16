@@ -1,20 +1,27 @@
 import { Province } from "./province"
+
 // --------------------------------------------------------------------
+
 export type GetAllProvincesRequest = {}
+
 export type GetAllProvnceseResponse = {
-    provinceList: Province[]
+    province_list: Province[]
 }
 // --------------------------------------------------------------------
+
 export type AttackProvinceRequest = {
-    provinceID: string
+    province_ID: string
 }
+
 export type AttackProvinceResponse = {
-    isSuccess: boolean
+    is_success: boolean
 }
 // --------------------------------------------------------------------
+
 export type SupportProvinceRequest = {
-    provinceID: string
+    province_ID: string
 }
+
 export type SupportProvinceResponse = {
-    isSuccess: boolean
+    is_success: boolean
 }

@@ -147,13 +147,15 @@ func setupDBConnection() {
 }
 
 func setupRoutes(mux *http.ServeMux) {
-	// Auth routes
-	mux.HandleFunc("/api/auth/register", authService.Register)
+	mux.
+
+		// Auth routes
+		mux.HandleFunc("/api/auth/register", authService.Register)
 	mux.HandleFunc("/api/auth/login", authService.Login)
-	mux.HandleFunc("/api/auth/verify", authService.Verify)
 
 	// Province routes
 	mux.HandleFunc("/api/provinces", provinceService.GetAllProvinces)
+	mux.HandleFunc("/api/")
 	//	mux.HandleFunc("/api/provinces/", provinceService.GetProvinceByID)
 
 	util.LogSuccess("Routes initialized", "main.setupRoutes()", "")

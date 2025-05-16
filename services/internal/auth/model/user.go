@@ -11,7 +11,7 @@ type User struct {
 
 	Username     string    `json:"username" bson:"username"`
 	Email        string    `json:"email" bson:"email"`
-	LastMoveDate time.Time `json:"lastMoveDate" bson:"lastMoveDate"`
+	LastMoveDate time.Time `json:"last_move_date" bson:"lastMoveDate"`
 
 	Password string `bson:"password"`
 }

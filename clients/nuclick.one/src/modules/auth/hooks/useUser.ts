@@ -56,7 +56,7 @@ export const useUser = create<useUserInterface>()(
                         user: {
                             username: user.username,
                             email: user.email,
-                            lastMoveDate: new Date(user.lastMoveDate),
+                            last_move_date: new Date(user.last_move_date),
                         },
                     })
 
@@ -79,7 +79,7 @@ export const useUser = create<useUserInterface>()(
                         user: {
                             username: user.username,
                             email: user.email,
-                            lastMoveDate: new Date(user.lastMoveDate),
+                            last_move_date: new Date(user.last_move_date),
                         },
                     })
 
@@ -100,7 +100,8 @@ export const useUser = create<useUserInterface>()(
                             cooldownRequest
                         )
 
-                    const cooldownSeconds = response.data.cooldownLeftInSeconds
+                    const cooldownSeconds =
+                        response.data.cooldown_left_in_seconds
                     get().updateCooldown(cooldownSeconds)
 
                     return response.data
@@ -127,7 +128,7 @@ export const useUser = create<useUserInterface>()(
                     set({
                         user: {
                             ...get().user!,
-                            lastMoveDate: new Date(),
+                            last_move_date: new Date(),
                         },
                     })
                 }
@@ -158,12 +159,12 @@ export const useUser = create<useUserInterface>()(
                     //    await get().cooldownLeftInSeconds({ token })
                     // }
 
-                    // Update lastMoveDate
+                    // Update last_move_date
                     if (get().user) {
                         set({
                             user: {
                                 ...get().user!,
-                                lastMoveDate: new Date(),
+                                last_move_date: new Date(),
                             },
                         })
                     }
