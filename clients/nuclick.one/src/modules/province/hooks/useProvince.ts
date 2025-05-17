@@ -9,7 +9,8 @@ import { Province } from "../types/province"
 // Dtos
 import {
     GetAllProvincesRequest,
-    GetAllProvnceseResponse,
+    GetAllProvincesResponse,
+    GetTopProvincesResponse,
     AttackProvinceRequest,
     AttackProvinceResponse,
     SupportProvinceRequest,
@@ -18,9 +19,11 @@ import {
 
 interface useProvinceState {
     provinceList: Province[] | null
+    topProvinces: Province[] | null
     getAllProvinces: (
         request: GetAllProvincesRequest
-    ) => Promise<GetAllProvnceseResponse>
+    ) => Promise<GetAllProvincesResponse>
+    getTopProvinces: () => Promise<GetTopProvincesResponse>
     attackProvince: (
         request: AttackProvinceRequest
     ) => Promise<AttackProvinceResponse>
@@ -29,13 +32,40 @@ interface useProvinceState {
     ) => Promise<SupportProvinceResponse>
 }
 
-export const useProvince = create<useProvinceState>(() => ({
+export const useProvince = create<useProvinceState>((set) => ({
     provinceList: null,
+    topProvinces: null,
     
     getAllProvinces: async (request: GetAllProvincesRequest) => {
-        const response = await CAxios.get<GetAllProvnceseResponse>('/provinces', { params: request });
+        const response = await CAxios.get<GetAllProvincesResponse>('/provinces', { params: request });
+        // Handle both possible response structures
+        let provinces: Province[] = [];
+        if (Array.isArray(response.data)) {
+            // If the response is directly an array
+            provinces = response.data;
+        } else if (response.data.province_list && Array.isArray(response.data.province_list)) {
+            // If the response has a provinces property that is an array
+            provinces = response.data.province_list;
+        }
+        set({ provinceList: provinces });
         return response.data;
     },
+    
+    getTopProvinces: async () => {
+        const response = await CAxios.get<GetTopProvincesResponse>('/provinces/top');
+        // Handle both possible response structures
+        let provinces: Province[] = [];
+        if (Array.isArray(response.data)) {
+            // If the response is directly an array
+            provinces = response.data;
+        } else if (response.data.provinces && Array.isArray(response.data.provinces)) {
+            // If the response has a provinces property that is an array
+            provinces = response.data.provinces;
+        }
+        set({ topProvinces: provinces });
+        return response.data;
+    },
+
     
     attackProvince: async (request: AttackProvinceRequest) => {
         const response = await CAxios.post<AttackProvinceResponse>('/provinces/attack', request);

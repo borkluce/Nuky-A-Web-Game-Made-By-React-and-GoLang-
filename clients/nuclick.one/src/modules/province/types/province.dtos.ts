@@ -4,9 +4,17 @@ import { Province } from "./province"
 
 export type GetAllProvincesRequest = {}
 
-export type GetAllProvnceseResponse = {
+export type GetAllProvincesResponse = {
     province_list: Province[]
 }
+// --------------------------------------------------------------------
+
+export type GetTopProvincesRequest = {}
+
+export type GetTopProvincesResponse = {
+    provinces?: Province[]
+}
+
 // --------------------------------------------------------------------
 
 export type AttackProvinceRequest = {
