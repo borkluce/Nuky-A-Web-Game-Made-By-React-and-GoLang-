@@ -76,19 +76,13 @@ func init() {
 // --------------------------------------------------------------------
 
 func main() {
-	// Create a new ServeMux
 	mux := http.NewServeMux()
-
-	// Setup routes
 	setupRoutes(mux)
-
-	// Apply middlewares
 	finalHandler := setupMiddlewares()(mux)
 
-	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080" // Default port if not specified
+		port = "8080" // Default port if not specified in the .env file
 	}
 
 	server := &http.Server{
@@ -96,7 +90,7 @@ func main() {
 		Handler: finalHandler,
 	}
 
-	util.LogSuccess("Server starting on port "+port, "main.main()", "")
+	util.LogSuccess("💣 Server starting on port "+port, "main.main()", "")
 	if err := server.ListenAndServe(); err != nil {
 		util.LogError("Server failed to start: "+err.Error(), "main.main()", "")
 		os.Exit(1)
@@ -109,8 +103,8 @@ func initClients() {
 	setupDBConnection()
 }
 
+// initRepos initializes repositories with database client
 func initRepos() {
-	// Initialize repositories with database client
 	db := mongoClient.Database("services_db")
 
 	userRepo = auth_repo.NewUserRepo(db.Collection("users"))
@@ -119,8 +113,8 @@ func initRepos() {
 	util.LogSuccess("Repositories initialized", "main.initRepos()", "")
 }
 
+// initServices initializes services with their dependencies
 func initServices() {
-	// Initialize services with their dependencies
 	authService = auth_service.NewAuthService(userRepo)
 	provinceService = province_service.NewProvinceService(provinceRepo)
 
@@ -147,16 +141,12 @@ func setupDBConnection() {
 }
 
 func setupRoutes(mux *http.ServeMux) {
-	mux.
-
-		// Auth routes
-		mux.HandleFunc("/api/auth/register", authService.Register)
+	// Auth routes
+	mux.HandleFunc("/api/auth/register", authService.Register)
 	mux.HandleFunc("/api/auth/login", authService.Login)
 
 	// Province routes
 	mux.HandleFunc("/api/provinces", provinceService.GetAllProvinces)
-	mux.HandleFunc("/api/")
-	//	mux.HandleFunc("/api/provinces/", provinceService.GetProvinceByID)
 
 	util.LogSuccess("Routes initialized", "main.setupRoutes()", "")
 }
