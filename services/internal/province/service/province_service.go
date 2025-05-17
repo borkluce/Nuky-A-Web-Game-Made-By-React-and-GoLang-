@@ -34,6 +34,29 @@ func (ps *ProvinceService) GetAllProvinces(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(provinces)
 }
 
+// GetTopProvinces returns the top 5 provinces by score difference (attackCount - supportCount)
+func (ps *ProvinceService) GetTopProvinces(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	// Get provinces sorted by score difference
+	provinces, err := ps.repo.GetProvincesByScoreDifference(ctx)
+	if err != nil {
+		http.Error(w, "Failed to get top provinces", http.StatusInternalServerError)
+		return
+	}
+
+	// Take only the top 5 (or less if there are fewer than 5 provinces)
+	topCount := 5
+	if len(provinces) < topCount {
+		topCount = len(provinces)
+	}
+	topProvinces := provinces[:topCount]
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(topProvinces)
+}
+
 // AttackProvince increases attack count by 1
 func (ps *ProvinceService) AttackProvince(w http.ResponseWriter, r *http.Request) {
 	ps.updateProvinceCount(w, r, true)

@@ -147,6 +147,9 @@ func setupRoutes(mux *http.ServeMux) {
 
 	// Province routes
 	mux.HandleFunc("/api/provinces", provinceService.GetAllProvinces)
+	mux.HandleFunc("/api/provinces/top", provinceService.GetTopProvinces)
+	mux.HandleFunc("/api/provinces/attack", provinceService.AttackProvince)
+	mux.HandleFunc("/api/provinces/support", provinceService.SupportProvince)
 
 	util.LogSuccess("Routes initialized", "main.setupRoutes()", "")
 }
