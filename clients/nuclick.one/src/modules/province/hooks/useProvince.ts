@@ -1,29 +1,31 @@
 import { create } from "zustand"
 
-// Custom Axios instance with preset base URL
+// Custom Axios instance
 import { CAxios } from "../../core/configs/cAxios"
 
 // Types
-import { Province } from "../types/province"
+import { generateRandomProvinces, Province } from "../types/province"
 
-// Dtos
+// DTOs
 import {
-    GetAllProvincesRequest,
-    GetAllProvincesResponse,
-    GetTopProvincesResponse,
+    GetAllProvinceResponse,
     AttackProvinceRequest,
     AttackProvinceResponse,
     SupportProvinceRequest,
-    SupportProvinceResponse
+    SupportProvinceResponse,
 } from "../types/province.dtos"
 
 interface useProvinceState {
-    provinceList: Province[] | null
-    topProvinces: Province[] | null
-    getAllProvinces: (
-        request: GetAllProvincesRequest
-    ) => Promise<GetAllProvincesResponse>
-    getTopProvinces: () => Promise<GetTopProvincesResponse>
+    // States
+    provinceList: Province[]
+    topProvinces: Province[]
+
+    // Status
+    isLoading: boolean
+    error: string | null
+
+    // APIs
+    getAllProvinces: () => Promise<void>
     attackProvince: (
         request: AttackProvinceRequest
     ) => Promise<AttackProvinceResponse>
@@ -33,47 +35,43 @@ interface useProvinceState {
 }
 
 export const useProvince = create<useProvinceState>((set) => ({
-    provinceList: null,
-    topProvinces: null,
-    
-    getAllProvinces: async (request: GetAllProvincesRequest) => {
-        const response = await CAxios.get<GetAllProvincesResponse>('/provinces', { params: request });
-        // Handle both possible response structures
-        let provinces: Province[] = [];
-        if (Array.isArray(response.data)) {
-            // If the response is directly an array
-            provinces = response.data;
-        } else if (response.data.province_list && Array.isArray(response.data.province_list)) {
-            // If the response has a provinces property that is an array
-            provinces = response.data.province_list;
-        }
-        set({ provinceList: provinces });
-        return response.data;
-    },
-    
-    getTopProvinces: async () => {
-        const response = await CAxios.get<GetTopProvincesResponse>('/provinces/top');
-        // Handle both possible response structures
-        let provinces: Province[] = [];
-        if (Array.isArray(response.data)) {
-            // If the response is directly an array
-            provinces = response.data;
-        } else if (response.data.provinces && Array.isArray(response.data.provinces)) {
-            // If the response has a provinces property that is an array
-            provinces = response.data.provinces;
-        }
-        set({ topProvinces: provinces });
-        return response.data;
-    },
+    provinceList: [],
+    topProvinces: [],
+    isLoading: false,
+    error: null,
+    // --------------------------------------------------------------------
+    getAllProvinces: async () => {
+        set({ isLoading: true, error: null })
+        try {
+            const response = await CAxios.get<GetAllProvinceResponse>(
+                "/province"
+            )
 
-    
-    attackProvince: async (request: AttackProvinceRequest) => {
-        const response = await CAxios.post<AttackProvinceResponse>('/provinces/attack', request);
-        return response.data;
+            console.log(response.data)
+
+            set({
+                provinceList: response.data.province_list,
+                isLoading: false,
+            })
+        } catch (error) {
+            console.error("Failed to fetch provinces", error)
+            set({ error: "Failed to load provinces", isLoading: false })
+        }
     },
-    
+    // --------------------------------------------------------------------
+    attackProvince: async (request: AttackProvinceRequest) => {
+        const response = await CAxios.post<AttackProvinceResponse>(
+            "/province/attack",
+            request
+        )
+        return response.data
+    },
+    // --------------------------------------------------------------------
     supportProvince: async (request: SupportProvinceRequest) => {
-        const response = await CAxios.post<SupportProvinceResponse>('/provinces/support', request);
-        return response.data;
-    }
+        const response = await CAxios.post<SupportProvinceResponse>(
+            "/province/support",
+            request
+        )
+        return response.data
+    },
 }))

@@ -9,17 +9,30 @@ import { useProvince } from "../../province/hooks/useProvince"
 import { useUser } from "../../auth/hooks/useUser"
 
 const GameView: React.FC = () => {
+    // States
     const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
     const [iconPosition, setIconPosition] = useState({ x: 0, y: 0 })
     const [loading, setLoading] = useState<boolean>(false)
     const [cooldownSeconds, setCooldownSeconds] = useState<number>(0)
 
-    const { attackProvince, supportProvince } = useProvince()
+    // Stores --------------------------------------------------------------------
+
+    const {
+        provinceList,
+        isLoading,
+        error,
+        attackProvince,
+        supportProvince,
+        getAllProvinces,
+    } = useProvince()
+
     const {
         isAllowedToMove,
         resetCooldownAfterMove,
         getRemainingCooldownSeconds,
     } = useUser()
+
+    // Effects --------------------------------------------------------------------
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -29,10 +42,16 @@ const GameView: React.FC = () => {
         return () => clearInterval(interval)
     }, [getRemainingCooldownSeconds])
 
-    // Get the position of the clicked SVG element
+    useEffect(() => {
+        getAllProvinces()
+    }, [])
+
+    // Handlers --------------------------------------------------------------------
+
+    // handleCountryClick gets the position of the clicked SVG element
     const handleCountryClick = (countryId: string, event: React.MouseEvent) => {
-        const svgElement = event.currentTarget as SVGElement
-        const boundingRect = svgElement.getBoundingClientRect()
+        // const svgElement = event.currentTarget as SVGElement
+        // const boundingRect = svgElement.getBoundingClientRect()
 
         // Using mouse position for icon placement
         setIconPosition({
@@ -73,7 +92,7 @@ const GameView: React.FC = () => {
 
                 if (result.is_success) {
                     console.log(`${actionType} successful!`)
-                    await resetCooldownAfterMove()
+                    resetCooldownAfterMove()
                 } else {
                     console.log(`${actionType} failed!`)
                 }
@@ -87,6 +106,8 @@ const GameView: React.FC = () => {
         }
     }
 
+    // HTML --------------------------------------------------------------------
+
     return (
         <div className="flex flex-row w-screen h-screen overflow-hidden">
             {/* Left Panel */}
@@ -94,7 +115,15 @@ const GameView: React.FC = () => {
                 <h2 className="text-black text-lg font-bold mb-4">
                     Top 5 Dangerous States
                 </h2>
-                <ul>{/* topStates.map... */}</ul>
+
+                {provinceList == undefined && <p>undefined</p>}
+                {isLoading && <p>Loading provinces...</p>}
+                {error && <p className="text-red-500">{error}</p>}
+                {!isLoading &&
+                    provinceList !== undefined &&
+                    provinceList.map((x) => (
+                        <p key={x.province_name}>{x.province_name}</p>
+                    ))}
 
                 {cooldownSeconds > 0 && (
                     <div className="mt-4 p-2 bg-yellow-100 rounded-md">

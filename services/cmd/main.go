@@ -13,7 +13,6 @@ import (
 	province_service "services/internal/province/service"
 
 	"github.com/joho/godotenv"
-
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -37,15 +36,13 @@ var (
 	provinceRepo *province_repo.ProvinceRepo
 )
 
-// --------------------------------------------------------------------
-
 func init() {
 	envType := os.Getenv("ENV")
 	if envType != "prod" {
-		if err := godotenv.Load("../.env"); err != nil { // If environment is dev
+		if err := godotenv.Load("../.env"); err != nil {
 			util.LogError("error loading .env"+err.Error(), "main.init()", "")
 		}
-	} else { // If the environment is prod
+	} else {
 		util.LogSuccess(
 			"Environment variables:"+
 				"\n"+
@@ -63,7 +60,6 @@ func init() {
 	initRepos()
 	initServices()
 
-	// Check if the program can reach the working directory.
 	dir, err := os.Getwd()
 	if err != nil {
 		util.LogError("failed to get working directory: "+err.Error(), "main.init()", "")
@@ -73,21 +69,18 @@ func init() {
 	}
 }
 
-// --------------------------------------------------------------------
-
 func main() {
 	mux := http.NewServeMux()
 	setupRoutes(mux)
-	finalHandler := setupMiddlewares()(mux)
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080" // Default port if not specified in the .env file
+		port = "8080"
 	}
 
 	server := &http.Server{
 		Addr:    ":" + port,
-		Handler: finalHandler,
+		Handler: withCORS(mux),
 	}
 
 	util.LogSuccess("💣 Server starting on port "+port, "main.main()", "")
@@ -97,15 +90,14 @@ func main() {
 	}
 }
 
-// Inits: --------------------------------------------------------------------
+// Inits
 
 func initClients() {
 	setupDBConnection()
 }
 
-// initRepos initializes repositories with database client
 func initRepos() {
-	db := mongoClient.Database("services_db")
+	db := mongoClient.Database("nuky_db")
 
 	userRepo = auth_repo.NewUserRepo(db.Collection("users"))
 	provinceRepo = province_repo.NewProvinceRepo(db.Collection("provinces"))
@@ -113,7 +105,6 @@ func initRepos() {
 	util.LogSuccess("Repositories initialized", "main.initRepos()", "")
 }
 
-// initServices initializes services with their dependencies
 func initServices() {
 	authService = auth_service.NewAuthService(userRepo)
 	provinceService = province_service.NewProvinceService(provinceRepo)
@@ -121,16 +112,15 @@ func initServices() {
 	util.LogSuccess("Services initialized", "main.initServices()", "")
 }
 
-// Setups: --------------------------------------------------------------------
+// Setups
 
 func setupDBConnection() {
 	var err error
-	mongoClient, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(os.Getenv("CONNECTION_STRING")))
+	mongoClient, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(os.Getenv("DB")))
 	if err != nil {
 		panic(err)
 	}
 
-	// Ping the database to verify connection
 	err = mongoClient.Ping(context.TODO(), nil)
 	if err != nil {
 		util.LogError("Failed to connect to MongoDB: "+err.Error(), "main.setupDBConnection()", "")
@@ -141,7 +131,7 @@ func setupDBConnection() {
 }
 
 func setupRoutes(mux *http.ServeMux) {
-	// Auth routes
+	// Public Auth routes
 	mux.HandleFunc("/api/auth/register", authService.Register)
 	mux.HandleFunc("/api/auth/login", authService.Login)
 
@@ -154,28 +144,18 @@ func setupRoutes(mux *http.ServeMux) {
 	util.LogSuccess("Routes initialized", "main.setupRoutes()", "")
 }
 
-func setupMiddlewares() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Set common headers
-			w.Header().Set("Content-Type", "application/json")
+func withCORS(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-			// CORS middleware
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		// Handle preflight
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
-			// OPTIONS requests handling
-			if r.Method == "OPTIONS" {
-				w.WriteHeader(http.StatusOK)
-				return
-			}
-
-			// Logging middleware
-			util.LogSuccess(fmt.Sprintf("%s %s", r.Method, r.URL.Path), "request", "")
-
-			// Pass to the next handler
-			next.ServeHTTP(w, r)
-		})
-	}
+		handler.ServeHTTP(w, r)
+	})
 }

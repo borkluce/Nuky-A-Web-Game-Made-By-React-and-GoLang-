@@ -2,9 +2,7 @@ import { Province } from "./province"
 
 // --------------------------------------------------------------------
 
-export type GetAllProvincesRequest = {}
-
-export type GetAllProvincesResponse = {
+export type GetAllProvinceResponse = {
     province_list: Province[]
 }
 // --------------------------------------------------------------------

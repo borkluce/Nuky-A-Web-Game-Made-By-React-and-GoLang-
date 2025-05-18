@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"services/internal/province/model"
 	"services/internal/province/repo"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -19,7 +20,8 @@ func NewProvinceService(repo *repo.ProvinceRepo) *ProvinceService {
 	return &ProvinceService{repo: repo}
 }
 
-// GetAllProvinces returns all provinces as JSON
+// --------------------------------------------------------------------
+
 func (ps *ProvinceService) GetAllProvinces(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
@@ -30,8 +32,15 @@ func (ps *ProvinceService) GetAllProvinces(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// Wrap the provinces in the DTO
+	response := model.GetAllProvinceResponse{
+		ProvinceList: provinces,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(provinces)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
 }
 
 // GetTopProvinces returns the top 5 provinces by score difference (attackCount - supportCount)
@@ -62,10 +71,14 @@ func (ps *ProvinceService) AttackProvince(w http.ResponseWriter, r *http.Request
 	ps.updateProvinceCount(w, r, true)
 }
 
+// --------------------------------------------------------------------
+
 // SupportProvince increases support count by 1
 func (ps *ProvinceService) SupportProvince(w http.ResponseWriter, r *http.Request) {
 	ps.updateProvinceCount(w, r, false)
 }
+
+// --------------------------------------------------------------------
 
 // shared logic for updating attack or support count
 func (ps *ProvinceService) updateProvinceCount(w http.ResponseWriter, r *http.Request, isAttack bool) {
