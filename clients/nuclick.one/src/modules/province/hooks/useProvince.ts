@@ -9,6 +9,7 @@ import { generateRandomProvinces, Province } from "../types/province"
 // DTOs
 import {
     GetAllProvinceResponse,
+    GetTopProvincesResponse,
     AttackProvinceRequest,
     AttackProvinceResponse,
     SupportProvinceRequest,
@@ -26,6 +27,7 @@ interface useProvinceState {
 
     // APIs
     getAllProvinces: () => Promise<void>
+    getTopProvinces: () => Promise<void>
     attackProvince: (
         request: AttackProvinceRequest
     ) => Promise<AttackProvinceResponse>
@@ -44,13 +46,32 @@ export const useProvince = create<useProvinceState>((set) => ({
         set({ isLoading: true, error: null })
         try {
             const response = await CAxios.get<GetAllProvinceResponse>(
-                "/province"
+                "/province?type=all"
             )
 
             console.log(response.data)
 
             set({
                 provinceList: response.data.province_list,
+                isLoading: false,
+            })
+        } catch (error) {
+            console.error("Failed to fetch provinces", error)
+            set({ error: "Failed to load provinces", isLoading: false })
+        }
+    },
+    // -------------------------------------------------------------------
+    getTopProvinces: async () => {
+        set({ isLoading: true, error: null })
+        try {
+            const response = await CAxios.get<GetTopProvincesResponse>(
+                "/province?type=top"
+            )
+
+            console.log(response.data)
+
+            set({
+                topProvinces: response.data.provinces,
                 isLoading: false,
             })
         } catch (error) {

@@ -8,19 +8,20 @@ import { FaShieldAlt } from "react-icons/fa"
 import { useProvince } from "../../province/hooks/useProvince"
 import { useUser } from "../../auth/hooks/useUser"
 
+// Components
+import Top5ProvincesPanel from "../components/Top5ProvincesPanel"
+import TopAllProvincesPanel from "../components/TopAllProvincesPanel"
+
 const GameView: React.FC = () => {
     // States
     const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
     const [iconPosition, setIconPosition] = useState({ x: 0, y: 0 })
     const [loading, setLoading] = useState<boolean>(false)
     const [cooldownSeconds, setCooldownSeconds] = useState<number>(0)
+    const [activePanel, setActivePanel] = useState<"top5" | "all">("top5")
 
     // Stores --------------------------------------------------------------------
-
     const {
-        provinceList,
-        isLoading,
-        error,
         attackProvince,
         supportProvince,
         getAllProvinces,
@@ -33,7 +34,6 @@ const GameView: React.FC = () => {
     } = useUser()
 
     // Effects --------------------------------------------------------------------
-
     useEffect(() => {
         const interval = setInterval(() => {
             setCooldownSeconds(getRemainingCooldownSeconds())
@@ -42,20 +42,12 @@ const GameView: React.FC = () => {
         return () => clearInterval(interval)
     }, [getRemainingCooldownSeconds])
 
-    useEffect(() => {
-        getAllProvinces()
-    }, [])
-
     // Handlers --------------------------------------------------------------------
-
     // handleCountryClick gets the position of the clicked SVG element
     const handleCountryClick = (countryId: string, event: React.MouseEvent) => {
-        // const svgElement = event.currentTarget as SVGElement
-        // const boundingRect = svgElement.getBoundingClientRect()
-
         // Using mouse position for icon placement
         setIconPosition({
-            // I found these values byrandomly trying
+            // I found these values by randomly trying
             x: event.clientX - 425,
             y: event.clientY - 20,
         })
@@ -107,29 +99,48 @@ const GameView: React.FC = () => {
     }
 
     // HTML --------------------------------------------------------------------
-
     return (
         <div className="flex flex-row w-screen h-screen overflow-hidden">
             {/* Left Panel */}
-            <div className="bg-white/50 border-r-[5px] min-w-[390px] h-full left-0 p-8">
-                <h2 className="text-black text-lg font-bold mb-4">
-                    Top 5 Dangerous States
-                </h2>
+            <div className="bg-white/50 border-r-[5px] min-w-[390px] h-full left-0 flex flex-col">
+                {/* Panel Tabs */}
+                <div className="flex border-b">
+                    <button 
+                        className={`flex-1 py-3 px-4 text-center font-medium ${
+                            activePanel === "top5" 
+                                ? "border-b-2 border-blue-500 text-blue-600" 
+                                : "text-gray-600 hover:text-gray-800"
+                        }`}
+                        onClick={() => setActivePanel("top5")}
+                    >
+                        Top 5
+                    </button>
+                    <button 
+                        className={`flex-1 py-3 px-4 text-center font-medium ${
+                            activePanel === "all" 
+                                ? "border-b-2 border-blue-500 text-blue-600" 
+                                : "text-gray-600 hover:text-gray-800"
+                        }`}
+                        onClick={() => setActivePanel("all")}
+                    >
+                        All Provinces
+                    </button>
+                </div>
+                
+                {/* Panel Content */}
+                <div className="flex-1 overflow-hidden">
+                    {activePanel === "top5" && <Top5ProvincesPanel />}
+                    {activePanel === "all" && <TopAllProvincesPanel />}
+                </div>
 
-                {provinceList == undefined && <p>undefined</p>}
-                {isLoading && <p>Loading provinces...</p>}
-                {error && <p className="text-red-500">{error}</p>}
-                {!isLoading &&
-                    provinceList !== undefined &&
-                    provinceList.map((x) => (
-                        <p key={x.province_name}>{x.province_name}</p>
-                    ))}
-
+                {/* Cooldown Info */}
                 {cooldownSeconds > 0 && (
-                    <div className="mt-4 p-2 bg-yellow-100 rounded-md">
-                        <p className="text-yellow-800">
-                            Cooldown: {cooldownSeconds}s remaining
-                        </p>
+                    <div className="p-4">
+                        <div className="p-2 bg-yellow-100 rounded-md">
+                            <p className="text-yellow-800">
+                                Cooldown: {cooldownSeconds}s remaining
+                            </p>
+                        </div>
                     </div>
                 )}
             </div>
