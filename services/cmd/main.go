@@ -136,10 +136,10 @@ func setupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/auth/login", authService.Login)
 
 	// Province routes
-	mux.HandleFunc("/api/provinces", provinceService.GetAllProvinces)
-	mux.HandleFunc("/api/provinces/top", provinceService.GetTopProvinces)
-	mux.HandleFunc("/api/provinces/attack", provinceService.AttackProvince)
-	mux.HandleFunc("/api/provinces/support", provinceService.SupportProvince)
+	mux.HandleFunc("/api/province", provinceService.GetAllProvinces)
+	mux.HandleFunc("/api/province/top", provinceService.GetTopProvinces)
+	mux.HandleFunc("/api/province/attack", provinceService.AttackProvince)
+	mux.HandleFunc("/api/province/support", provinceService.SupportProvince)
 
 	util.LogSuccess("Routes initialized", "main.setupRoutes()", "")
 }

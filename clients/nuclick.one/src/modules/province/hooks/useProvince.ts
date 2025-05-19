@@ -46,7 +46,8 @@ export const useProvince = create<useProvinceState>((set) => ({
         set({ isLoading: true, error: null })
         try {
             const response = await CAxios.get<GetAllProvinceResponse>(
-                "/province?type=all"
+                //    "/province?type=all"
+                "/province"
             )
 
             console.log(response.data)
@@ -65,7 +66,7 @@ export const useProvince = create<useProvinceState>((set) => ({
         set({ isLoading: true, error: null })
         try {
             const response = await CAxios.get<GetTopProvincesResponse>(
-                "/province?type=top"
+                "/province/top"
             )
 
             console.log(response.data)
