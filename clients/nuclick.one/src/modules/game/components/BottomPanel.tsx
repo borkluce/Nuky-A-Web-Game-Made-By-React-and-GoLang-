@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react"
+import { GiMineExplosion } from "react-icons/gi"
 import { useUser } from "../../auth/hooks/useUser"
 
 const BottomPanel: React.FC = () => {
@@ -53,7 +54,10 @@ const BottomPanel: React.FC = () => {
         <div className="flex w-full h-20 border-t bg-white">
             {/* Progress to UTC 14:00 */}
             <div className="w-1/2 p-2">
-                <div className="text-sm text-gray-600 mb-1">Until next UTC 14:00</div>
+                <div className="text-sm text-gray-600 mb-1 flex items-center justify-between">
+                    <span>Until next UTC 14:00</span>
+                    <GiMineExplosion className="text-red-500 ml-2" size={18} />
+                </div>
                 <div className="w-full h-4 bg-gray-200 rounded">
                     <div
                         className="h-full bg-green-500 rounded"
@@ -61,7 +65,7 @@ const BottomPanel: React.FC = () => {
                     />
                 </div>
             </div>
-    
+
             {/* Cooldown counter */}
             <div className="w-1/2 p-2 flex flex-col justify-center items-end">
                 <div className="text-sm text-gray-600 mb-1">Cooldown</div>
@@ -71,7 +75,6 @@ const BottomPanel: React.FC = () => {
             </div>
         </div>
     )
-    
 }
 
 export default BottomPanel
