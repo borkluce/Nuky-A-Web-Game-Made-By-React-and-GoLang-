@@ -1,65 +1,77 @@
-// components/BottomPanel.tsx
-
 import React, { useEffect, useState } from "react"
+import { useUser } from "../../auth/hooks/useUser"
 
 const BottomPanel: React.FC = () => {
-    const [progress, setProgress] = useState(0)
-    const [timeLeft, setTimeLeft] = useState("")
+    const { getRemainingCooldownSeconds } = useUser()
+    const [cooldownSeconds, setCooldownSeconds] = useState<number>(0)
+    const [progressPercent, setProgressPercent] = useState(0)
 
-    // Helper to calculate milliseconds until next UTC 14:00
-    const getMsUntilNextUTC14 = (): number => {
-        const now = new Date()
-        const nextUTC14 = new Date(Date.UTC(
-            now.getUTCFullYear(),
-            now.getUTCMonth(),
-            now.getUTCDate(),
-            14, 0, 0, 0
-        ))
+    // Update cooldown every second
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCooldownSeconds(getRemainingCooldownSeconds())
+        }, 1000)
 
-        if (now.getUTCHours() >= 14) {
-            nextUTC14.setUTCDate(nextUTC14.getUTCDate() + 1)
-        }
+        return () => clearInterval(interval)
+    }, [getRemainingCooldownSeconds])
 
-        return nextUTC14.getTime() - now.getTime()
-    }
-
+    // Update daily progress bar to next UTC 14:00
     useEffect(() => {
         const updateProgress = () => {
             const now = new Date()
-            const total = 24 * 60 * 60 * 1000 // 24h in ms
-            const msSinceLastUTC14 = total - getMsUntilNextUTC14()
-            const percent = (msSinceLastUTC14 / total) * 100
+            const utcNow = new Date(
+                Date.UTC(
+                    now.getUTCFullYear(),
+                    now.getUTCMonth(),
+                    now.getUTCDate(),
+                    now.getUTCHours(),
+                    now.getUTCMinutes(),
+                    now.getUTCSeconds()
+                )
+            )
 
-            setProgress(Math.min(percent, 100))
+            let nextUTC14 = new Date(utcNow)
+            nextUTC14.setUTCHours(14, 0, 0, 0)
 
-            // Format time left
-            const seconds = Math.floor(getMsUntilNextUTC14() / 1000)
-            const hrs = Math.floor(seconds / 3600)
-            const mins = Math.floor((seconds % 3600) / 60)
-            const secs = seconds % 60
+            // If already past UTC 14 today, set to next day's 14:00
+            if (utcNow >= nextUTC14) {
+                nextUTC14.setUTCDate(nextUTC14.getUTCDate() + 1)
+            }
 
-            setTimeLeft(`${hrs}h ${mins}m ${secs}s`)
+            const totalDay = 24 * 60 * 60 * 1000
+            const elapsed = utcNow.getTime() - (nextUTC14.getTime() - totalDay)
+            const progress = Math.min((elapsed / totalDay) * 100, 100)
+            setProgressPercent(progress)
         }
 
         updateProgress()
-        const interval = setInterval(updateProgress, 1000)
-
+        const interval = setInterval(updateProgress, 60000) // update every minute
         return () => clearInterval(interval)
     }, [])
 
     return (
-        <div className="bg-white p-4 border-t h-[120px] shrink-0 flex flex-col justify-center">
-            <p className="text-gray-700 mb-2">
-                Next reset at UTC 14:00 — Time left: <strong>{timeLeft}</strong>
-            </p>
-            <div className="w-full bg-gray-200 h-4 rounded-full overflow-hidden">
-                <div
-                    className="bg-green-500 h-full transition-all"
-                    style={{ width: `${progress}%` }}
-                />
+        <div className="flex w-full h-20 border-t bg-white">
+            {/* Progress to UTC 14:00 */}
+            <div className="w-1/2 p-2">
+                <div className="text-sm text-gray-600 mb-1">Until next UTC 14:00</div>
+                <div className="w-full h-4 bg-gray-200 rounded">
+                    <div
+                        className="h-full bg-green-500 rounded"
+                        style={{ width: `${progressPercent}%`, transition: "width 0.5s" }}
+                    />
+                </div>
+            </div>
+    
+            {/* Cooldown counter */}
+            <div className="w-1/2 p-2 flex flex-col justify-center items-end">
+                <div className="text-sm text-gray-600 mb-1">Cooldown</div>
+                <div className="text-lg font-semibold">
+                    {cooldownSeconds > 0 ? `${cooldownSeconds}s` : "Ready"}
+                </div>
             </div>
         </div>
     )
+    
 }
 
 export default BottomPanel
