@@ -62,8 +62,15 @@ func (ps *ProvinceService) GetTopProvinces(w http.ResponseWriter, r *http.Reques
 	}
 	topProvinces := provinces[:topCount]
 
+	// Wrap in response object
+	response := struct {
+		Provinces []model.Province `json:"provinces"`
+	}{
+		Provinces: topProvinces,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(topProvinces)
+	json.NewEncoder(w).Encode(response)
 }
 
 // AttackProvince increases attack count by 1
