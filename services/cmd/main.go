@@ -16,7 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/kahleryasla/pkg/go/log/util"
+	"github.com/kahlery/pkg/go/log/util"
 )
 
 // Clients

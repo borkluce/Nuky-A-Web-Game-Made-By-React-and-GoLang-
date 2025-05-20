@@ -11,8 +11,8 @@ import (
 	"services/internal/auth/repo"
 
 	// Third
-	"github.com/kahleryasla/pkg/go/auth/token"
-	"github.com/kahleryasla/pkg/go/log/util"
+	"github.com/kahlery/pkg/go/auth/token"
+	"github.com/kahlery/pkg/go/log/util"
 )
 
 type AuthService struct {
