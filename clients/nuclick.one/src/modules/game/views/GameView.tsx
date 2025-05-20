@@ -11,6 +11,7 @@ import { useUser } from "../../auth/hooks/useUser"
 // Components
 import Top5ProvincesPanel from "../components/Top5ProvincesPanel"
 import TopAllProvincesPanel from "../components/TopAllProvincesPanel"
+import BottomPanel from "../components/BottomPanel"
 
 const GameView: React.FC = () => {
     // States
@@ -199,12 +200,7 @@ const GameView: React.FC = () => {
                 </div>
 
                 {/* Bottom Info Panel */}
-                <div className="bg-white p-4 border-t h-[120px] shrink-0">
-                    <p className="text-gray-500">
-                        There will be time left for nuke info and cooldown info
-                        here...
-                    </p>
-                </div>
+                <BottomPanel />
             </div>
         </div>
     )
