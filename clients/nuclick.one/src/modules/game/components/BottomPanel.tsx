@@ -67,7 +67,7 @@ const BottomPanel: React.FC = () => {
             </div>
 
             {/* Cooldown counter */}
-            <div className="w-1/2 p-2 flex flex-col justify-center items-end">
+            <div className="w-1/2 p-2 flex flex-col justify-center items-center">
                 <div className="text-sm text-gray-600 mb-1">Cooldown</div>
                 <div className="text-lg font-semibold">
                     {cooldownSeconds > 0 ? `${cooldownSeconds}s` : "Ready"}
