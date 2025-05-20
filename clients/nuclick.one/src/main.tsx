@@ -7,10 +7,14 @@ import "./index.css"
 // Views
 // import { AuthView } from "./modules/auth"
 import { GameView } from "./modules/game"
+import { AuthView } from "./modules/auth"
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
-        <GameView />
+        <div className="w-screen min-h-screen bg-4">
+            {/* <GameView /> */}
+            <AuthView />
+        </div>
     </StrictMode>
 )
 
