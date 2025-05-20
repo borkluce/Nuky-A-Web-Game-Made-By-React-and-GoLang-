@@ -22,8 +22,8 @@ interface useUserInterface {
     coolDate: number // Datetime cooldown will be finished
 
     // APIs
-    login: (loginRequest: LoginRequest) => Promise<LoginResponse>
-    register: (registerRequest: RegisterRequest) => Promise<RegisterResponse>
+    login: (loginRequest: LoginRequest) => Promise<boolean>
+    register: (registerRequest: RegisterRequest) => Promise<boolean>
     cooldownLeftInSeconds: (
         cooldownLeftInSecondsRequest: CooldownLeftInSecondsRequest
     ) => Promise<CooldownLeftInSecondsResponse>
@@ -43,53 +43,61 @@ export const useUser = create<useUserInterface>()(
         (set, get) => ({
             user: null,
             coolDate: 0,
-
+            // --------------------------------------------------------------------
             login: async (loginRequest: LoginRequest) => {
                 try {
                     const response = await CAxios.post<LoginResponse>(
                         "/auth/login",
                         loginRequest
                     )
-                    const { user } = response.data
 
-                    set({
-                        user: {
-                            username: user.username,
-                            email: user.email,
-                            last_move_date: new Date(user.last_move_date),
-                        },
-                    })
-
-                    return response.data
+                    if (get().user) {
+                        set({
+                            user: {
+                                ...get().user!,
+                                token: response.data.token,
+                            },
+                        })
+                    }
                 } catch (error) {
                     console.error("Login failed:", error)
                     throw error
                 }
-            },
 
+                if (get().user?.token) {
+                    return true
+                } else {
+                    return false
+                }
+            },
+            // --------------------------------------------------------------------
             register: async (registerRequest: RegisterRequest) => {
                 try {
                     const response = await CAxios.post<RegisterResponse>(
                         "/auth/register",
                         registerRequest
                     )
-                    const { user } = response.data
 
-                    set({
-                        user: {
-                            username: user.username,
-                            email: user.email,
-                            last_move_date: new Date(user.last_move_date),
-                        },
-                    })
-
-                    return response.data
+                    if (get().user) {
+                        set({
+                            user: {
+                                ...get().user!,
+                                token: response.data.token,
+                            },
+                        })
+                    }
                 } catch (error) {
                     console.error("Registration failed:", error)
                     throw error
                 }
-            },
 
+                if (get().user?.token) {
+                    return true
+                } else {
+                    return false
+                }
+            },
+            // --------------------------------------------------------------------
             cooldownLeftInSeconds: async (
                 cooldownRequest: CooldownLeftInSecondsRequest
             ) => {
@@ -110,16 +118,16 @@ export const useUser = create<useUserInterface>()(
                     throw error
                 }
             },
-
+            // --------------------------------------------------------------------
             logout: () => {
                 set({ user: null, coolDate: 0 })
             },
-
+            // --------------------------------------------------------------------
             isAllowedToMove: () => {
                 const { coolDate } = get()
                 return Date.now() >= coolDate
             },
-
+            // --------------------------------------------------------------------
             updateCooldown: (seconds: number) => {
                 const newCoolDate = Date.now() + seconds * 1000
                 set({ coolDate: newCoolDate })
@@ -133,13 +141,13 @@ export const useUser = create<useUserInterface>()(
                     })
                 }
             },
-
+            // --------------------------------------------------------------------
             getRemainingCooldownSeconds: () => {
                 const { coolDate } = get()
                 const remaining = Math.max(0, (coolDate - Date.now()) / 1000)
                 return Math.ceil(remaining)
             },
-
+            // --------------------------------------------------------------------
             resetCooldownAfterMove: async (seconds?: number) => {
                 // If seconds are provided, use them
                 // Otherwise, use default or request from server

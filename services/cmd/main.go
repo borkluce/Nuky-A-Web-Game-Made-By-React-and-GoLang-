@@ -36,6 +36,8 @@ var (
 	provinceRepo *province_repo.ProvinceRepo
 )
 
+// Main --------------------------------------------------------------------
+
 func init() {
 	envType := os.Getenv("ENV")
 	if envType != "prod" {
@@ -90,7 +92,7 @@ func main() {
 	}
 }
 
-// Inits
+// Inits --------------------------------------------------------------------
 
 func initClients() {
 	setupDBConnection()
@@ -112,7 +114,7 @@ func initServices() {
 	util.LogSuccess("Services initialized", "main.initServices()", "")
 }
 
-// Setups
+// Setups --------------------------------------------------------------------
 
 func setupDBConnection() {
 	var err error
