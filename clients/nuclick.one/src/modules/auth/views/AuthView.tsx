@@ -5,7 +5,7 @@ interface AuthViewProps {
 }
 
 const AuthView: React.FC<AuthViewProps> = ({ className }) => {
-    return <LoginForm className="w-[400px] mx-auto my-auto bg-1"></LoginForm>
+    return <LoginForm className="w-[400px] mx-auto "></LoginForm>
 }
 
 export default AuthView
