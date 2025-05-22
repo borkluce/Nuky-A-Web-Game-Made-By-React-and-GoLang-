@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"time"
 
 	auth_repo "services/internal/auth/repo"
 	auth_service "services/internal/auth/service"
@@ -109,7 +111,18 @@ func initRepos() {
 
 func initServices() {
 	authService = auth_service.NewAuthService(userRepo)
-	provinceService = province_service.NewProvinceService(provinceRepo)
+
+	startDateStr := os.Getenv("GAME_START_DATE")
+	if startDateStr == "" {
+		log.Fatal("GAME_START_DATE environment variable is required")
+	}
+
+	startDate, err := time.Parse(time.RFC3339, startDateStr)
+	if err != nil {
+		log.Fatalf("Invalid GAME_START_DATE format: %v", err)
+	}
+
+	provinceService = province_service.NewProvinceService(provinceRepo, startDate)
 
 	util.LogSuccess("Services initialized", "main.initServices()", "")
 }

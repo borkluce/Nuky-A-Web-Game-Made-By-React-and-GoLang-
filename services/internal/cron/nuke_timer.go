@@ -79,9 +79,18 @@ func initRepos() {
 }
 
 func initServices() {
-	// We may use envy to set startDate
-	startDate := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	startDateStr := os.Getenv("GAME_START_DATE")
+	if startDateStr == "" {
+		log.Fatal("GAME_START_DATE environment variable is required")
+	}
+
+	startDate, err := time.Parse(time.RFC3339, startDateStr)
+	if err != nil {
+		log.Fatalf("Invalid GAME_START_DATE format: %v", err)
+	}
+
 	provinceService = province_service.NewProvinceService(provinceRepo, startDate)
+
 	log.Println("Service initialized")
 }
 
