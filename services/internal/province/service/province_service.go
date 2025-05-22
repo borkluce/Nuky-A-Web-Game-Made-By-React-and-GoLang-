@@ -114,3 +114,19 @@ func (ps *ProvinceService) updateProvinceCount(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Province updated successfully"))
 }
+
+// --------------------------------------------------------------------
+
+// Nuke operation
+func (ps *ProvinceService) UpdateDestroymentRound(w http.ResponseWriter, r *http.Request) error {
+
+	// round count (now - start date)
+
+	// repo.updateDest(round count) (  prov.destroyment_round = round count )
+
+	// Client requests when it is 14 from GameView.
+
+	// reset all provinces' attack and support count
+}
+
+// reset func
