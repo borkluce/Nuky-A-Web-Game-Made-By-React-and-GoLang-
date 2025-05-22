@@ -152,3 +152,26 @@ func (ps *ProvinceService) UpdateDestroymentRound(w http.ResponseWriter, r *http
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
+
+// --------------------------------------------------------------------
+// ExecuteDestroymentRound performs the nuke operation without HTTP context (for cron jobs)
+func (ps *ProvinceService) ExecuteDestroymentRound(ctx context.Context) (int, error) {
+	// Calculate round count (days passed since start date)
+	currentTime := time.Now()
+	daysPassed := int(currentTime.Sub(ps.startDate).Hours() / 24)
+	roundCount := daysPassed
+
+	// Update destroyment round of the worst province (highest attackCount - supportCount)
+	err := ps.repo.UpdateDestroymentRoundOfTheWorstProvince(ctx, roundCount)
+	if err != nil {
+		return 0, err
+	}
+
+	// Reset all provinces' attack and support counts
+	err = ps.repo.ResetAllProvinceCounts(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return roundCount, nil
+}
