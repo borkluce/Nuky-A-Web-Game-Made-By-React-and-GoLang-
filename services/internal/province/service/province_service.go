@@ -4,24 +4,26 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"time"
-
 	"services/internal/province/model"
 	"services/internal/province/repo"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ProvinceService struct {
-	repo *repo.ProvinceRepo
+	repo      *repo.ProvinceRepo
+	startDate time.Time // Game start date
 }
 
-func NewProvinceService(repo *repo.ProvinceRepo) *ProvinceService {
-	return &ProvinceService{repo: repo}
+func NewProvinceService(repo *repo.ProvinceRepo, startDate time.Time) *ProvinceService {
+	return &ProvinceService{
+		repo:      repo,
+		startDate: startDate,
+	}
 }
 
 // --------------------------------------------------------------------
-
 func (ps *ProvinceService) GetAllProvinces(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
@@ -79,14 +81,12 @@ func (ps *ProvinceService) AttackProvince(w http.ResponseWriter, r *http.Request
 }
 
 // --------------------------------------------------------------------
-
 // SupportProvince increases support count by 1
 func (ps *ProvinceService) SupportProvince(w http.ResponseWriter, r *http.Request) {
 	ps.updateProvinceCount(w, r, false)
 }
 
 // --------------------------------------------------------------------
-
 // shared logic for updating attack or support count
 func (ps *ProvinceService) updateProvinceCount(w http.ResponseWriter, r *http.Request, isAttack bool) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -116,17 +116,39 @@ func (ps *ProvinceService) updateProvinceCount(w http.ResponseWriter, r *http.Re
 }
 
 // --------------------------------------------------------------------
+// UpdateDestroymentRound handles the nuke operation
+func (ps *ProvinceService) UpdateDestroymentRound(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
 
-// Nuke operation
-func (ps *ProvinceService) UpdateDestroymentRound(w http.ResponseWriter, r *http.Request) error {
+	// Calculate round count (days passed since start date)
+	currentTime := time.Now()
+	daysPassed := int(currentTime.Sub(ps.startDate).Hours() / 24)
+	roundCount := daysPassed
 
-	// round count (now - start date)
+	// Update destroyment round of the worst province (highest attackCount - supportCount)
+	err := ps.repo.UpdateDestroymentRoundOfTheWorstProvince(ctx, roundCount)
+	if err != nil {
+		http.Error(w, "Failed to update destroyment round", http.StatusInternalServerError)
+		return
+	}
 
-	// repo.updateDest(round count) (  prov.destroyment_round = round count )
+	// Reset all provinces' attack and support counts
+	err = ps.repo.ResetAllProvinceCounts(ctx)
+	if err != nil {
+		http.Error(w, "Failed to reset province counts", http.StatusInternalServerError)
+		return
+	}
 
-	// Client requests when it is 14 from GameView.
+	response := struct {
+		Message    string `json:"message"`
+		RoundCount int    `json:"round_count"`
+	}{
+		Message:    "Destroyment round updated and counts reset successfully",
+		RoundCount: roundCount,
+	}
 
-	// reset all provinces' attack and support count
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
-
-// reset func
