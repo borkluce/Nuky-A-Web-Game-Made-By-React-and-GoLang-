@@ -16,14 +16,19 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
     return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
-            <Card>
-                <img
-                    src="brand/logo/logo.png"
-                    className="mx-auto w-64 -my-20"
-                />
+            <Card className="">
                 <CardContent>
+                    <h1 className="mb-10 text-2xl flex items-center">
+                        <span className="text-[#CF082E]">
+                            <img
+                                src="brand/logo/logo.jpg"
+                                className="mr-2 w-7"
+                            />
+                        </span>{" "}
+                        vafaill
+                    </h1>
                     <form>
-                        <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-4">
                             <div className="grid gap-3">
                                 <Label htmlFor="email">Email</Label>
                                 <Input
@@ -36,12 +41,6 @@ export function LoginForm({
                             <div className="grid gap-3">
                                 <div className="flex items-center">
                                     <Label htmlFor="password">Password</Label>
-                                    <a
-                                        href="#"
-                                        className="ml-auto inline-block underline text-sm underline-offset-4 hover:underline"
-                                    >
-                                        forgot password?
-                                    </a>
                                 </div>
                                 <Input
                                     id="password"
@@ -49,12 +48,18 @@ export function LoginForm({
                                     required
                                     placeholder="***************"
                                 />
+                                <a
+                                    href="#"
+                                    className="ml-auto inline-block underline text-sm underline-offset-4 hover:underline"
+                                >
+                                    forgot password?
+                                </a>
                             </div>
                             <div className="flex flex-col gap-3">
                                 <Button type="submit" className="w-full">
                                     Login
                                 </Button>
-                                <Button variant="outline" className="w-full">
+                                <Button variant="secondary" className="w-full">
                                     Login with Google
                                 </Button>
                             </div>
