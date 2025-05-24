@@ -43,7 +43,7 @@ var (
 func init() {
 	envType := os.Getenv("ENV")
 	if envType != "prod" {
-		if err := godotenv.Load("../.env"); err != nil {
+		if err := godotenv.Load("../../.env"); err != nil {
 			util.LogError("error loading .env"+err.Error(), "main.init()", "")
 		}
 	} else {

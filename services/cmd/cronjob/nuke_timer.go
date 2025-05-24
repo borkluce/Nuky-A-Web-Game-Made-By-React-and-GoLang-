@@ -25,7 +25,7 @@ func init() {
 	// Load environment variables
 	envType := os.Getenv("ENV")
 	if envType != "prod" {
-		if err := godotenv.Load("../.env"); err != nil {
+		if err := godotenv.Load("../../.env"); err != nil {
 			log.Printf("Error loading .env: %v", err)
 		}
 	}
@@ -41,7 +41,7 @@ func main() {
 	// Setting up to work with UTC
 	c := cron.New(cron.WithLocation(time.UTC))
 
-	_, err := c.AddFunc("0 14 * * *", func() {
+	_, err := c.AddFunc("36 15 * * *", func() {
 		log.Println("Daily Nuke Time!")
 
 		// Create context with timeout
