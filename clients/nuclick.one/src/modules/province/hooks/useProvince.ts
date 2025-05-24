@@ -16,6 +16,11 @@ import {
     SupportProvinceResponse,
 } from "../types/province.dtos"
 
+interface GetCurrentRoundResponse {
+    round: number
+    success: boolean
+}
+
 interface useProvinceState {
     // States
     provinceList: Province[]
@@ -34,6 +39,7 @@ interface useProvinceState {
     supportProvince: (
         request: SupportProvinceRequest
     ) => Promise<SupportProvinceResponse>
+    getCurrentRound: () => Promise<number>
 }
 
 export const useProvince = create<useProvinceState>((set) => ({
@@ -95,5 +101,17 @@ export const useProvince = create<useProvinceState>((set) => ({
             request
         )
         return response.data
+    },
+    // --------------------------------------------------------------------
+    getCurrentRound: async () => {
+        try {
+            const response = await CAxios.get<GetCurrentRoundResponse>(
+                "/province/round"
+            )
+            return response.data.round
+        } catch (error) {
+            console.error("Failed to fetch current round", error)
+            throw error
+        }
     },
 }))

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"services/internal/province/model"
 	"services/internal/province/repo"
@@ -174,4 +175,39 @@ func (ps *ProvinceService) ExecuteDestroymentRound(ctx context.Context) (int, er
 	}
 
 	return roundCount, nil
+}
+
+// --------------------------------------------------------------------
+// GetCurrentRound returns wihch round the game is in
+func (ps *ProvinceService) GetCurrentRound(ctx context.Context) (int, error) {
+	// Calculate current round based on start date
+	now := time.Now().UTC()
+	daysSinceStart := int(now.Sub(ps.startDate).Hours() / 24)
+
+	// If it's past 14:00 UTC today, we're in the next round
+	todayAt14 := time.Date(now.Year(), now.Month(), now.Day(), 14, 0, 0, 0, time.UTC)
+	if now.After(todayAt14) {
+		daysSinceStart++
+	}
+
+	return daysSinceStart + 1, nil // Round starts from 1
+}
+
+func (ps *ProvinceService) GetCurrentRoundHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ctx := r.Context()
+
+	roundCount, err := ps.GetCurrentRound(ctx)
+	if err != nil {
+		http.Error(w, "Failed to get current round", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	response := fmt.Sprintf(`{"round": %d, "success": true}`, roundCount)
+	w.Write([]byte(response))
 }

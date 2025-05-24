@@ -155,6 +155,7 @@ func setupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/province/top", provinceService.GetTopProvinces)
 	mux.HandleFunc("/api/province/attack", provinceService.AttackProvince)
 	mux.HandleFunc("/api/province/support", provinceService.SupportProvince)
+	mux.HandleFunc("/api/province/round", provinceService.GetCurrentRoundHandler)
 
 	util.LogSuccess("Routes initialized", "main.setupRoutes()", "")
 }

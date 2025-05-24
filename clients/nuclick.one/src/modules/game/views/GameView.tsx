@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 
 // Icons
 import { LuSword } from "react-icons/lu"
@@ -20,12 +20,16 @@ const GameView: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false)
     const [cooldownSeconds, setCooldownSeconds] = useState<number>(0)
     const [activePanel, setActivePanel] = useState<"top5" | "all">("top5")
+    const [lastRoundCount, setLastRoundCount] = useState<number | null>(null)
+    const [showNukeNotification, setShowNukeNotification] = useState<boolean>(false)
 
-    // Stores --------------------------------------------------------------------
+    // Stores
     const {
         attackProvince,
         supportProvince,
         getAllProvinces,
+        getTopProvinces,
+        getCurrentRound, // Add this method to your useProvince hook
     } = useProvince()
 
     const {
@@ -35,6 +39,109 @@ const GameView: React.FC = () => {
     } = useUser()
 
     // Effects --------------------------------------------------------------------
+    // Function to refresh all data
+    const refreshAllData = useCallback(async () => {
+        try {
+            // Refresh both panels data
+            await Promise.all([
+                getAllProvinces(),
+                getTopProvinces()
+            ])
+            
+            // Show nuke notification
+            setShowNukeNotification(true)
+            setTimeout(() => setShowNukeNotification(false), 5000) // Hide after 5 seconds
+            
+            console.log("UI refreshed after nuke event!")
+        } catch (error) {
+            console.error("Error refreshing data after nuke:", error)
+        }
+    }, [getAllProvinces, getTopProvinces])
+
+    // Smart nuke detection - only check around 14:00 UTC
+    useEffect(() => {
+        const checkForNuke = async () => {
+            try {
+                const currentRound = await getCurrentRound()
+                
+                if (lastRoundCount !== null && currentRound > lastRoundCount) {
+                    // New round detected - nuke happened!
+                    console.log(`Nuke detected! Round ${lastRoundCount} -> ${currentRound}`)
+                    await refreshAllData()
+                }
+                
+                setLastRoundCount(currentRound)
+            } catch (error) {
+                console.error("Error checking round count:", error)
+            }
+        }
+
+        const shouldCheckForNuke = () => {
+            const now = new Date()
+            const utcHours = now.getUTCHours()
+            const utcMinutes = now.getUTCMinutes()
+            
+            // Only check between 13:59 and 14:04 UTC (5 minute window around nuke time)
+            return (utcHours === 13 && utcMinutes >= 59) || 
+                   (utcHours === 14 && utcMinutes <= 4)
+        }
+
+        const setupNukeDetection = () => {
+            // Always check once on mount to get initial round count
+            if (lastRoundCount === null) {
+                checkForNuke()
+                return
+            }
+
+            // Then only set up polling if we're in the nuke window
+            if (shouldCheckForNuke()) {
+                console.log("Nuke detection activated - checking every 10 seconds")
+                const nukeCheckInterval = setInterval(checkForNuke, 10000) // Check every 10 seconds during nuke window
+                
+                // Clear interval after 10 minutes to avoid infinite polling
+                setTimeout(() => {
+                    clearInterval(nukeCheckInterval)
+                    console.log("Nuke detection window ended")
+                }, 10 * 60 * 1000)
+                
+                return nukeCheckInterval
+            } else {
+                console.log(`Not nuke time (${new Date().toUTCString()}). Next check will be at 13:59 UTC`)
+                
+                // Calculate time until next nuke window (13:59 UTC)
+                const now = new Date()
+                const nextNukeCheck = new Date()
+                nextNukeCheck.setUTCHours(13, 59, 0, 0)
+                
+                // If we've already passed today's 13:59, set for tomorrow
+                if (now.getTime() > nextNukeCheck.getTime()) {
+                    nextNukeCheck.setUTCDate(nextNukeCheck.getUTCDate() + 1)
+                }
+                
+                const timeUntilNextCheck = nextNukeCheck.getTime() - now.getTime()
+                
+                console.log(`Next nuke check scheduled for: ${nextNukeCheck.toUTCString()}`)
+                
+                // Set timeout to start checking when nuke window begins
+                const timeoutId = setTimeout(() => {
+                    setupNukeDetection() // Recursive call to start polling
+                }, timeUntilNextCheck)
+                
+                return timeoutId
+            }
+        }
+
+        const intervalOrTimeout = setupNukeDetection()
+
+        return () => {
+            if (intervalOrTimeout) {
+                clearInterval(intervalOrTimeout)
+                clearTimeout(intervalOrTimeout)
+            }
+        }
+    }, [lastRoundCount, refreshAllData, getCurrentRound])
+
+    // Cooldown effect
     useEffect(() => {
         const interval = setInterval(() => {
             setCooldownSeconds(getRemainingCooldownSeconds())
@@ -52,7 +159,6 @@ const GameView: React.FC = () => {
             x: event.clientX - 425,
             y: event.clientY - 20,
         })
-
         setSelectedCountry(countryId)
     }
 
@@ -86,6 +192,8 @@ const GameView: React.FC = () => {
                 if (result.is_success) {
                     console.log(`${actionType} successful!`)
                     resetCooldownAfterMove()
+                    // Refresh data after successful action
+                    await refreshAllData()
                 } else {
                     console.log(`${actionType} failed!`)
                 }
@@ -102,6 +210,19 @@ const GameView: React.FC = () => {
     // HTML --------------------------------------------------------------------
     return (
         <div className="flex flex-row w-screen h-screen overflow-hidden">
+            {/* Nuke Notification */}
+            {showNukeNotification && (
+                <div className="fixed top-4 right-4 z-50 bg-red-500 text-white p-4 rounded-lg shadow-lg animate-pulse">
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl">💥</span>
+                        <div>
+                            <p className="font-bold">NUKE EVENT!</p>
+                            <p className="text-sm">Provinces have been reset</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Left Panel */}
             <div className="bg-white/50 border-r-[5px] min-w-[390px] h-full left-0 flex flex-col">
                 {/* Panel Tabs */}
