@@ -12,7 +12,7 @@ import {
     RegisterRequest,
     RegisterResponse,
 } from "../types/user.dtos"
-import { User } from "../types/user"
+import { User, createUserFromResponse } from "../types/user"
 
 const DEFAULT_COOLDOWN_SECONDS = 3600 // 1 hour cooldown
 
@@ -36,6 +36,7 @@ interface useUserInterface {
     isAllowedToMove: () => boolean
     updateCooldown: (seconds: number) => void
     getRemainingCooldownSeconds: () => number
+    isAuthenticated: () => boolean
 }
 
 export const useUser = create<useUserInterface>()(
@@ -51,23 +52,27 @@ export const useUser = create<useUserInterface>()(
                         loginRequest
                     )
 
-                    if (get().user) {
-                        set({
-                            user: {
-                                ...get().user!,
-                                token: response.data.token,
-                            },
-                        })
+                    if (response.data.token) {
+                        let user: User
+                        
+                        if (response.data.user) {
+                            // Use user data from response
+                            user = createUserFromResponse(response.data.token, response.data.user)
+                        } else {
+                            // Fallback to basic user creation
+                            user = createUserFromResponse(response.data.token, {
+                                username: "",
+                                email: loginRequest.email || ""
+                            })
+                        }
+
+                        set({ user })
+                        return true
                     }
+                    return false
                 } catch (error) {
                     console.error("Login failed:", error)
                     throw error
-                }
-
-                if (get().user?.token) {
-                    return true
-                } else {
-                    return false
                 }
             },
             // --------------------------------------------------------------------
@@ -78,23 +83,27 @@ export const useUser = create<useUserInterface>()(
                         registerRequest
                     )
 
-                    if (get().user) {
-                        set({
-                            user: {
-                                ...get().user!,
-                                token: response.data.token,
-                            },
-                        })
+                    if (response.data.token) {
+                        let user: User
+                        
+                        if (response.data.user) {
+                            // Use user data from response
+                            user = createUserFromResponse(response.data.token, response.data.user)
+                        } else {
+                            // Fallback to basic user creation
+                            user = createUserFromResponse(response.data.token, {
+                                username: registerRequest.username,
+                                email: registerRequest.email
+                            })
+                        }
+
+                        set({ user })
+                        return true
                     }
+                    return false
                 } catch (error) {
                     console.error("Registration failed:", error)
                     throw error
-                }
-
-                if (get().user?.token) {
-                    return true
-                } else {
-                    return false
                 }
             },
             // --------------------------------------------------------------------
@@ -146,6 +155,11 @@ export const useUser = create<useUserInterface>()(
                 const { coolDate } = get()
                 const remaining = Math.max(0, (coolDate - Date.now()) / 1000)
                 return Math.ceil(remaining)
+            },
+            // --------------------------------------------------------------------
+            isAuthenticated: () => {
+                const { user } = get()
+                return !!(user?.token && user?.isAuthenticated)
             },
             // --------------------------------------------------------------------
             resetCooldownAfterMove: async (seconds?: number) => {

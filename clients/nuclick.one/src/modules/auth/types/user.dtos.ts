@@ -6,6 +6,12 @@ export type LoginRequest = {
 
 export type LoginResponse = {
     token: string
+    user?: {
+        ID: string
+        username: string
+        email: string
+        last_move_date: string
+    }
 }
 
 // --------------------------------------------------------------------
@@ -18,6 +24,12 @@ export type RegisterRequest = {
 
 export type RegisterResponse = {
     token: string
+    user?: {
+        ID: string
+        username: string
+        email: string
+        last_move_date: string
+    }
 }
 
 // --------------------------------------------------------------------

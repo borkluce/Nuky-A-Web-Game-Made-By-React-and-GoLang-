@@ -30,13 +30,14 @@ const GameView: React.FC = () => {
         supportProvince,
         getAllProvinces,
         getTopProvinces,
-        getCurrentRound, // Add this method to your useProvince hook
+        getCurrentRound,
     } = useProvince()
 
     const {
         isAllowedToMove,
         resetCooldownAfterMove,
         getRemainingCooldownSeconds,
+        logout,
     } = useUser()
 
     // Effects --------------------------------------------------------------------
@@ -80,7 +81,7 @@ const GameView: React.FC = () => {
             } catch (error) {
                 console.error("Error checking round count:", error)
             }
-        }
+        }    
 
         const shouldCheckForNuke = () => {
             const now = new Date()
@@ -213,6 +214,11 @@ const GameView: React.FC = () => {
         }
     }
 
+    const handleLogout = () => {
+        logout()
+        window.location.reload() // App yeniden yüklenir, AuthView devreye girer
+    }    
+
     // HTML --------------------------------------------------------------------
     return (
         <div className="flex flex-row w-screen h-screen overflow-hidden">
@@ -271,6 +277,16 @@ const GameView: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Logout Button */}
+                <div className="p-4 border-t mt-auto">
+                    <button
+                        onClick={handleLogout}
+                        className="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded transition-colors"
+                    >
+                        Logout
+                    </button>
+                </div>
             </div>
 
             {/* Right Side: Map + Bottom Panel */}

@@ -12,8 +12,8 @@ import { AuthView } from "./modules/auth"
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <div className="w-screen min-h-screen flex items-center">
-            <GameView /> 
-            {/*  <AuthView />  */} 
+            <AuthView /> 
+            {/*  <GameView />  */} 
         </div>
     </StrictMode>
 )

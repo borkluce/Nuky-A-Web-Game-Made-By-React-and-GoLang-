@@ -49,7 +49,7 @@ func (as AuthService) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if user already exists
+	// Check if user already exists by email
 	_, err := as.userRepo.GetUserByEmail(r.Context(), req.Email)
 	if err == nil {
 		http.Error(w, "Email already registered", http.StatusConflict)
@@ -102,6 +102,7 @@ func (as AuthService) Register(w http.ResponseWriter, r *http.Request) {
 	// Send response
 	response := model.RegisterResponse{
 		Token: jwtToken,
+		User:  user,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -128,13 +129,21 @@ func (as AuthService) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate request
-	if req.Email == "" || req.Password == "" {
-		http.Error(w, "Email and password are required", http.StatusBadRequest)
+	if (req.Email == nil && req.Username == nil) || req.Password == "" {
+		http.Error(w, "Email/username and password are required", http.StatusBadRequest)
 		return
 	}
 
-	// Find user by email
-	user, err := as.userRepo.GetUserByEmail(r.Context(), req.Email)
+	var user *model.User
+	var err error
+
+	// Try to find user by email first, then by username
+	if req.Email != nil && *req.Email != "" {
+		user, err = as.userRepo.GetUserByEmail(r.Context(), *req.Email)
+	} else if req.Username != nil && *req.Username != "" {
+		user, err = as.userRepo.GetUserByUsername(r.Context(), *req.Username)
+	}
+
 	if err != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
@@ -166,6 +175,7 @@ func (as AuthService) Login(w http.ResponseWriter, r *http.Request) {
 	// Send response
 	response := model.LoginResponse{
 		Token: jwtToken,
+		User:  *user,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
