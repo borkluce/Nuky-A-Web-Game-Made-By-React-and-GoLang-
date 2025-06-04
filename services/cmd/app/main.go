@@ -157,6 +157,9 @@ func setupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/province/support", provinceService.SupportProvince)
 	mux.HandleFunc("/api/province/round", provinceService.GetCurrentRoundHandler)
 
+	// Gaming mechanics routes
+	mux.HandleFunc("/api/user/update-move-date", authService.UpdateMoveDate)
+
 	util.LogSuccess("Routes initialized", "main.setupRoutes()", "")
 }
 

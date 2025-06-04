@@ -163,25 +163,24 @@ export const useUser = create<useUserInterface>()(
             },
             // --------------------------------------------------------------------
             resetCooldownAfterMove: async (seconds?: number) => {
-                // If seconds are provided, use them
-                // Otherwise, use default or request from server
-                if (seconds !== undefined) {
-                    get().updateCooldown(seconds)
-                    return
-                }
-
+                const token = get().user?.token
                 try {
-                    // Option 1: Use a fixed cooldown
-                    // This is temporary. I will fix after backend is finished
-                    get().updateCooldown(DEFAULT_COOLDOWN_SECONDS)
-
-                    // Option 2: Request cooldown from server after move
-                    // const token = get().user?.token
-                    // if (token) {
-                    //    await get().cooldownLeftInSeconds({ token })
-                    // }
-
-                    // Update last_move_date
+                    if (seconds !== undefined) {
+                        get().updateCooldown(seconds)
+                    } else {
+                        get().updateCooldown(DEFAULT_COOLDOWN_SECONDS)
+                    }
+                    
+                    // Backend update
+                    if (token) {
+                        await CAxios.post("/user/update-move-date", {}, {
+                            headers: {
+                                Authorization: `Bearer ${token}`
+                            }
+                        })
+                    }
+            
+                    // Zustsnd store update
                     if (get().user) {
                         set({
                             user: {
@@ -191,11 +190,9 @@ export const useUser = create<useUserInterface>()(
                         })
                     }
                 } catch (error) {
-                    console.error("Failed to reset cooldown:", error)
-                    // Fallback to default cooldown if server request fails
-                    get().updateCooldown(DEFAULT_COOLDOWN_SECONDS)
+                    console.error("Failed to update move date:", error)
                 }
-            },
+            }
         }),
         {
             name: "user",

@@ -3,7 +3,9 @@ package service
 import (
 	// Standart
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	// Internal
@@ -11,8 +13,10 @@ import (
 	"services/internal/auth/repo"
 
 	// Third
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/kahlery/pkg/go/auth/token"
 	"github.com/kahlery/pkg/go/log/util"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type AuthService struct {
@@ -155,12 +159,6 @@ func (as AuthService) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update last move date
-	user.LastMoveDate = time.Now()
-	if err := as.userRepo.PutUser(r.Context(), *user); err != nil {
-		util.LogError("Failed to update last move date: "+err.Error(), "AuthService.LoginHandler", "")
-	}
-
 	// Generate JWT token
 	jwtToken, err := token.GenerateToken(user.ID.Hex())
 	if err != nil {
@@ -180,4 +178,78 @@ func (as AuthService) Login(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+// --------------------------------------------------------------------
+
+// POST /api/user/update-move-date
+func (as AuthService) UpdateMoveDate(w http.ResponseWriter, r *http.Request) {
+	userID, err := ExtractUserIDFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	objID, _ := primitive.ObjectIDFromHex(userID)
+	user, err := as.userRepo.GetUserByID(r.Context(), objID)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	user.LastMoveDate = time.Now()
+	err = as.userRepo.PutUser(r.Context(), *user)
+	if err != nil {
+		http.Error(w, "Failed to update", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+// --------------------------------------------------------------------
+
+// This part may be better if we import ExtractUserIDFromRequest into kahlery package
+
+// ExtractUserIDFromRequest extracts user ID from the Authorization header
+func ExtractUserIDFromRequest(r *http.Request) (string, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return "", errors.New("authorization header missing")
+	}
+
+	const bearerPrefix = "Bearer "
+	if !strings.HasPrefix(authHeader, bearerPrefix) {
+		return "", errors.New("invalid authorization header format")
+	}
+
+	tokenString := strings.TrimPrefix(authHeader, bearerPrefix)
+	tokenString = strings.TrimSpace(tokenString)
+	if tokenString == "" {
+		return "", errors.New("token is empty")
+	}
+
+	// Use the token package's VerifyToken function instead
+	jwtToken, err := token.VerifyToken(tokenString)
+	if err != nil {
+		return "", err
+	}
+
+	if !jwtToken.Valid {
+		return "", errors.New("invalid token")
+	}
+
+	claims, ok := jwtToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", errors.New("invalid token claims")
+	}
+
+	userID, ok := claims["userName"].(string)
+	if !ok || userID == "" {
+		return "", errors.New("userName not found in token")
+	}
+
+	return userID, nil
 }
