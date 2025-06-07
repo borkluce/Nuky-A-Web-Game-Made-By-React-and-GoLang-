@@ -3,12 +3,16 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"services/internal/province/model"
 	"services/internal/province/repo"
+	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt"
+	"github.com/kahlery/pkg/go/auth/token"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -78,42 +82,108 @@ func (ps *ProvinceService) GetTopProvinces(w http.ResponseWriter, r *http.Reques
 
 // AttackProvince increases attack count by 1
 func (ps *ProvinceService) AttackProvince(w http.ResponseWriter, r *http.Request) {
-	ps.updateProvinceCount(w, r, true)
+	// Only allow POST method
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// This is for making sure if a logged in user is attacking
+	/*	_, err := ExtractUserIDFromRequest(r)
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		} */
+
+	// Parse request body
+	var req model.AttackProvinceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate province ID
+	if req.ProvinceID == "" {
+		http.Error(w, "Province ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Validate ObjectID format
+	if _, err := primitive.ObjectIDFromHex(req.ProvinceID); err != nil {
+		http.Error(w, "Invalid province ID format", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	// Update province attack count
+	if err := ps.repo.UpdateProvinceByID(ctx, req.ProvinceID, true); err != nil {
+		http.Error(w, "Failed to update province", http.StatusInternalServerError)
+		return
+	}
+
+	response := model.AttackProvinceResponse{
+		IsSuccess: true,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
 
 // --------------------------------------------------------------------
 // SupportProvince increases support count by 1
 func (ps *ProvinceService) SupportProvince(w http.ResponseWriter, r *http.Request) {
-	ps.updateProvinceCount(w, r, false)
-}
+	// Only allow POST method
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-// --------------------------------------------------------------------
-// shared logic for updating attack or support count
-func (ps *ProvinceService) updateProvinceCount(w http.ResponseWriter, r *http.Request, isAttack bool) {
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
+	// This is for making sure if a logged in user is supporting
+	// Extract user ID from JWT token
+	/*	_, err := ExtractUserIDFromRequest(r)
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		} */
 
-	// Extract ID from query parameters
-	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "Missing province ID", http.StatusBadRequest)
+	// Parse request body
+	var req model.SupportProvinceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate province ID
+	if req.ProvinceID == "" {
+		http.Error(w, "Province ID is required", http.StatusBadRequest)
 		return
 	}
 
 	// Validate ObjectID format
-	if _, err := primitive.ObjectIDFromHex(id); err != nil {
+	if _, err := primitive.ObjectIDFromHex(req.ProvinceID); err != nil {
 		http.Error(w, "Invalid province ID format", http.StatusBadRequest)
 		return
 	}
 
-	// Call repo's UpdateProvince
-	if err := ps.repo.UpdateProvinceByID(ctx, id, isAttack); err != nil {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	// Update province support count
+	if err := ps.repo.UpdateProvinceByID(ctx, req.ProvinceID, false); err != nil {
 		http.Error(w, "Failed to update province", http.StatusInternalServerError)
 		return
 	}
 
+	response := model.SupportProvinceResponse{
+		IsSuccess: true,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Province updated successfully"))
+	json.NewEncoder(w).Encode(response)
 }
 
 // --------------------------------------------------------------------
@@ -210,4 +280,45 @@ func (ps *ProvinceService) GetCurrentRoundHandler(w http.ResponseWriter, r *http
 	w.Header().Set("Content-Type", "application/json")
 	response := fmt.Sprintf(`{"round": %d, "success": true}`, roundCount)
 	w.Write([]byte(response))
+}
+
+// ExtractUserIDFromRequest extracts user ID from the Authorization header
+func ExtractUserIDFromRequest(r *http.Request) (string, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return "", errors.New("authorization header missing")
+	}
+
+	const bearerPrefix = "Bearer "
+	if !strings.HasPrefix(authHeader, bearerPrefix) {
+		return "", errors.New("invalid authorization header format")
+	}
+
+	tokenString := strings.TrimPrefix(authHeader, bearerPrefix)
+	tokenString = strings.TrimSpace(tokenString)
+	if tokenString == "" {
+		return "", errors.New("token is empty")
+	}
+
+	// Use the token package's VerifyToken function instead
+	jwtToken, err := token.VerifyToken(tokenString)
+	if err != nil {
+		return "", err
+	}
+
+	if !jwtToken.Valid {
+		return "", errors.New("invalid token")
+	}
+
+	claims, ok := jwtToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", errors.New("invalid token claims")
+	}
+
+	userID, ok := claims["userName"].(string)
+	if !ok || userID == "" {
+		return "", errors.New("userName not found in token")
+	}
+
+	return userID, nil
 }

@@ -16,16 +16,17 @@ export type GetTopProvincesResponse = {
 // --------------------------------------------------------------------
 
 export type AttackProvinceRequest = {
-    province_ID: string
+    province_id: string
 }
+
+export type SupportProvinceRequest = {
+    province_id: string
+}
+
+// --------------------------------------------------------------------
 
 export type AttackProvinceResponse = {
     is_success: boolean
-}
-// --------------------------------------------------------------------
-
-export type SupportProvinceRequest = {
-    province_ID: string
 }
 
 export type SupportProvinceResponse = {
