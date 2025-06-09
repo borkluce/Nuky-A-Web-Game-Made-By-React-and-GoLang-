@@ -56,8 +56,6 @@ export const useProvince = create<useProvinceState>((set) => ({
                 "/province"
             )
 
-            console.log(response.data)
-
             set({
                 provinceList: response.data.province_list,
                 isLoading: false,
@@ -74,8 +72,6 @@ export const useProvince = create<useProvinceState>((set) => ({
             const response = await CAxios.get<GetTopProvincesResponse>(
                 "/province/top"
             )
-            console.log("top 5 states")
-            console.log(response.data.provinces)
 
             set({
                 topProvinces: response.data.provinces,
