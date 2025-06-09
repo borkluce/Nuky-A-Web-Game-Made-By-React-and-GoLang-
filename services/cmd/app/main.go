@@ -159,6 +159,7 @@ func setupRoutes(mux *http.ServeMux) {
 
 	// Gaming mechanics routes
 	mux.HandleFunc("/api/user/update-move-date", authService.UpdateMoveDate)
+	mux.HandleFunc("/api/user/cooldown", authService.GetCooldownLeft)
 
 	util.LogSuccess("Routes initialized", "main.setupRoutes()", "")
 }

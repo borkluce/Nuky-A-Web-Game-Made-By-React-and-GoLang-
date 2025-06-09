@@ -207,11 +207,51 @@ func (as AuthService) UpdateMoveDate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// POST /api/user/cooldown
+func (as AuthService) GetCooldownLeft(w http.ResponseWriter, r *http.Request) {
+	// Parse request body
+	var req model.CooldownLeftInSecondsRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	userID, err := ExtractUserIDFromTokenString(req.Token)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	objID, _ := primitive.ObjectIDFromHex(userID)
+	user, err := as.userRepo.GetUserByID(r.Context(), objID)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	// Calculate Cooldown
+	now := time.Now()
+	elapsed := now.Sub(user.LastMoveDate)
+	cooldownDuration := time.Hour // 3600s cooldown
+
+	remaining := cooldownDuration - elapsed
+	if remaining < 0 {
+		remaining = 0
+	}
+
+	resp := model.CooldownLeftInSecondsResponse{
+		CooldownLeftInSeconds: int(remaining.Seconds()),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+}
+
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
 
-// This part may be better if we import ExtractUserIDFromRequest into kahlery package
+// This part may be better if we import these functions into kahlery package
 
 // ExtractUserIDFromRequest extracts user ID from the Authorization header
 func ExtractUserIDFromRequest(r *http.Request) (string, error) {
@@ -232,6 +272,29 @@ func ExtractUserIDFromRequest(r *http.Request) (string, error) {
 	}
 
 	// Use the token package's VerifyToken function instead
+	jwtToken, err := token.VerifyToken(tokenString)
+	if err != nil {
+		return "", err
+	}
+
+	if !jwtToken.Valid {
+		return "", errors.New("invalid token")
+	}
+
+	claims, ok := jwtToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", errors.New("invalid token claims")
+	}
+
+	userID, ok := claims["userName"].(string)
+	if !ok || userID == "" {
+		return "", errors.New("userName not found in token")
+	}
+
+	return userID, nil
+}
+
+func ExtractUserIDFromTokenString(tokenString string) (string, error) {
 	jwtToken, err := token.VerifyToken(tokenString)
 	if err != nil {
 		return "", err

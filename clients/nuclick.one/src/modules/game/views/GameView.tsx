@@ -19,7 +19,7 @@ const GameView: React.FC = () => {
     const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
     const [iconPosition, setIconPosition] = useState({ x: 0, y: 0 })
     const [loading, setLoading] = useState<boolean>(false)
-    const [cooldownSeconds, setCooldownSeconds] = useState<number>(0)
+  //  const [cooldownSeconds, setCooldownSeconds] = useState<number>(0)
     const [activePanel, setActivePanel] = useState<"top5" | "all">("top5")
     const [lastRoundCount, setLastRoundCount] = useState<number | null>(null)
     const [showNukeNotification, setShowNukeNotification] = useState<boolean>(false)
@@ -38,6 +38,9 @@ const GameView: React.FC = () => {
         resetCooldownAfterMove,
         getRemainingCooldownSeconds,
         logout,
+        isAuthenticated,
+        cooldownLeftInSeconds,
+        user,
     } = useUser()
 
     // Effects --------------------------------------------------------------------
@@ -59,7 +62,22 @@ const GameView: React.FC = () => {
         } catch (error) {
             console.error("Error refreshing data:", error)
         }
-    }, [getAllProvinces, getTopProvinces])    
+    }, [getAllProvinces, getTopProvinces])
+
+    // Cooldown sync on first load
+    useEffect(() => {
+        if (isAuthenticated() && user?.token) {
+            cooldownLeftInSeconds({ token: user.token })
+                .then(() => {
+                    console.log("Cooldown synced with backend.")
+                })
+                .catch((err) => {
+                    console.error("Failed to sync cooldown:", err)
+                })
+        }
+    }, [isAuthenticated, user?.token, cooldownLeftInSeconds])
+    
+
 
     // Fill provinceList
     useEffect(() => {
@@ -149,15 +167,6 @@ const GameView: React.FC = () => {
         }
     }, [lastRoundCount, refreshAllData, getCurrentRound])
 
-    // Cooldown effect
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCooldownSeconds(getRemainingCooldownSeconds())
-        }, 1000)
-
-        return () => clearInterval(interval)
-    }, [getRemainingCooldownSeconds])
-
     // Handlers --------------------------------------------------------------------
     // handleCountryClick gets the position of the clicked SVG element
     const handleCountryClick = (countryName: string, event: React.MouseEvent) => {
@@ -175,21 +184,20 @@ const GameView: React.FC = () => {
             // Check for cooldown first
             if (!isAllowedToMove()) {
                 console.log(
-                    `You are in cooldown! Please wait ${cooldownSeconds} seconds.`
+                    `You are in cooldown! Please wait ${getRemainingCooldownSeconds()} seconds.`
                 )
                 return
             }
-
+    
             setLoading(true)
-
+    
             try {
                 let result
-
+    
                 if (actionType === "attack") {
                     // Call the backend to attack the province
                     result = await attackProvince({
                         province_id: selectedCountry,
-                        
                     })
                 } else {
                     // Call the backend to support the province
@@ -197,11 +205,11 @@ const GameView: React.FC = () => {
                         province_id: selectedCountry,
                     })
                 }
-
+    
                 if (result.is_success) {
                     console.log(`${actionType} successful!`)
                     resetCooldownAfterMove()
-                    // Refresh data after successful action
+                    // Refresh data after successful action, no nuke notification
                     await refreshAllData(false)
                 } else {
                     console.log(`${actionType} failed!`)
@@ -214,7 +222,7 @@ const GameView: React.FC = () => {
                 setSelectedCountry(null)
             }
         }
-    }
+    }    
 
     const handleLogout = () => {
         logout()
@@ -270,11 +278,11 @@ const GameView: React.FC = () => {
                 </div>
 
                 {/* Cooldown Info */}
-                {cooldownSeconds > 0 && (
+                {getRemainingCooldownSeconds() > 0 && (
                     <div className="p-4">
                         <div className="p-2 bg-yellow-100 rounded-md">
                             <p className="text-yellow-800">
-                                Cooldown: {cooldownSeconds}s remaining
+                                Cooldown: {getRemainingCooldownSeconds()}s remaining
                             </p>
                         </div>
                     </div>
@@ -310,16 +318,16 @@ const GameView: React.FC = () => {
                             <button
                                 onClick={() => handleIconClick("attack")}
                                 className={`bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors cursor-pointer ${
-                                    loading || cooldownSeconds > 0
+                                    loading || getRemainingCooldownSeconds() > 0
                                         ? "opacity-50 cursor-not-allowed"
                                         : ""
                                 }`}
                                 title={
-                                    cooldownSeconds > 0
+                                    getRemainingCooldownSeconds() > 0
                                         ? "In cooldown"
                                         : "Attack"
                                 }
-                                disabled={loading || cooldownSeconds > 0}
+                                disabled={loading || getRemainingCooldownSeconds() > 0}
                             >
                                 <LuSword className="w-6 h-6" />
                             </button>
@@ -327,16 +335,16 @@ const GameView: React.FC = () => {
                             <button
                                 onClick={() => handleIconClick("defend")}
                                 className={`bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors cursor-pointer ${
-                                    loading || cooldownSeconds > 0
+                                    loading || getRemainingCooldownSeconds() > 0
                                         ? "opacity-50 cursor-not-allowed"
                                         : ""
                                 }`}
                                 title={
-                                    cooldownSeconds > 0
+                                    getRemainingCooldownSeconds() > 0
                                         ? "In cooldown"
                                         : "Defend"
                                 }
-                                disabled={loading || cooldownSeconds > 0}
+                                disabled={loading || getRemainingCooldownSeconds() > 0}
                             >
                                 <FaShieldAlt className="w-6 h-6" />
                             </button>
