@@ -93,7 +93,7 @@ func (as AuthService) Register(w http.ResponseWriter, r *http.Request) {
 
 	// Set ID for response
 	user.ID = id
-	user.Password = "" // Don't send back password
+	user.Password = ""
 
 	// Generate JWT token
 	jwtToken, err := token.GenerateToken(user.ID.Hex())

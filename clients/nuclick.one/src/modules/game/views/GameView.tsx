@@ -12,7 +12,12 @@ import { useUser } from "../../auth/hooks/useUser"
 import Top5ProvincesPanel from "../components/Top5ProvincesPanel"
 import TopAllProvincesPanel from "../components/TopAllProvincesPanel"
 import BottomPanel from "../components/BottomPanel"
+import WinnerPage from "../components/WinnerPage"
 import { Console } from "console"
+
+// Types
+// I know it is not the best way but I wanted to finish it quickly
+import { Province } from "../../province/types/province"
 
 const GameView: React.FC = () => {
     // States
@@ -23,6 +28,7 @@ const GameView: React.FC = () => {
     const [activePanel, setActivePanel] = useState<"top5" | "all">("top5")
     const [lastRoundCount, setLastRoundCount] = useState<number | null>(null)
     const [showNukeNotification, setShowNukeNotification] = useState<boolean>(false)
+    const [winner, setWinner] = useState<string | null>(null)
 
     // Stores
     const {
@@ -31,6 +37,7 @@ const GameView: React.FC = () => {
         getAllProvinces,
         getTopProvinces,
         getCurrentRound,
+        provinceList,
     } = useProvince()
 
     const {
@@ -64,6 +71,22 @@ const GameView: React.FC = () => {
         }
     }, [getAllProvinces, getTopProvinces])
 
+    const checkForWinner = useCallback(() => {
+        const activeProvincies = provinceList.filter(province => province.destroyment_round === -1)
+        
+        if (activeProvincies.length === 1) {
+            setWinner(activeProvincies[0].province_name)
+        }
+        
+        return activeProvincies.length === 1
+    }, [provinceList])    
+
+    useEffect(() => {
+        if (provinceList.length > 0) {
+            checkForWinner()
+        }
+    }, [provinceList, checkForWinner])
+
     // Cooldown sync on first load
     useEffect(() => {
         if (isAuthenticated() && user?.token) {
@@ -76,8 +99,6 @@ const GameView: React.FC = () => {
                 })
         }
     }, [isAuthenticated, user?.token, cooldownLeftInSeconds])
-    
-
 
     // Fill provinceList
     useEffect(() => {
@@ -231,6 +252,10 @@ const GameView: React.FC = () => {
 
     // HTML --------------------------------------------------------------------
     return (
+        <>
+        {winner ? (
+            <WinnerPage winnerProvinceName={winner} />
+        ) : (
         <div className="flex flex-row w-screen h-screen overflow-hidden">
             {/* Nuke Notification */}
             {showNukeNotification && (
@@ -303,7 +328,7 @@ const GameView: React.FC = () => {
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Map Area */}
                 <div className="flex-1 relative overflow-hidden">
-                    {renderSVG(handleCountryClick)}
+                    {renderSVG(handleCountryClick, provinceList)}
 
                     {selectedCountry && (
                         <div
@@ -356,14 +381,15 @@ const GameView: React.FC = () => {
                 <BottomPanel />
             </div>
         </div>
+        )}
+        </>
     )
 }
 
 function renderSVG(
-    onCountryClick: (provinceId: string, event: React.MouseEvent) => void
+    onCountryClick: (provinceId: string, event: React.MouseEvent) => void,
+    provinceList: Province[]
 ) {
-    const { provinceList } = useProvince()
-
     const provinceMap = new Map(provinceList.map(p => [p.province_name, p]))
 
     const getColor = (name: string) => {
