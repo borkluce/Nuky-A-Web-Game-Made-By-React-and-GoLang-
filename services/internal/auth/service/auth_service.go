@@ -271,27 +271,7 @@ func ExtractUserIDFromRequest(r *http.Request) (string, error) {
 		return "", errors.New("token is empty")
 	}
 
-	// Use the token package's VerifyToken function instead
-	jwtToken, err := token.VerifyToken(tokenString)
-	if err != nil {
-		return "", err
-	}
-
-	if !jwtToken.Valid {
-		return "", errors.New("invalid token")
-	}
-
-	claims, ok := jwtToken.Claims.(jwt.MapClaims)
-	if !ok {
-		return "", errors.New("invalid token claims")
-	}
-
-	userID, ok := claims["userName"].(string)
-	if !ok || userID == "" {
-		return "", errors.New("userName not found in token")
-	}
-
-	return userID, nil
+	return ExtractUserIDFromTokenString((tokenString))
 }
 
 func ExtractUserIDFromTokenString(tokenString string) (string, error) {
@@ -309,9 +289,9 @@ func ExtractUserIDFromTokenString(tokenString string) (string, error) {
 		return "", errors.New("invalid token claims")
 	}
 
-	userID, ok := claims["userName"].(string)
+	userID, ok := claims["user_id"].(string)
 	if !ok || userID == "" {
-		return "", errors.New("userName not found in token")
+		return "", errors.New("userID not found in token")
 	}
 
 	return userID, nil

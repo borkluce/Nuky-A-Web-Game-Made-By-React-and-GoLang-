@@ -300,7 +300,6 @@ func ExtractUserIDFromRequest(r *http.Request) (string, error) {
 		return "", errors.New("token is empty")
 	}
 
-	// Use the token package's VerifyToken function instead
 	jwtToken, err := token.VerifyToken(tokenString)
 	if err != nil {
 		return "", err
@@ -315,9 +314,9 @@ func ExtractUserIDFromRequest(r *http.Request) (string, error) {
 		return "", errors.New("invalid token claims")
 	}
 
-	userID, ok := claims["userName"].(string)
+	userID, ok := claims["userID"].(string)
 	if !ok || userID == "" {
-		return "", errors.New("userName not found in token")
+		return "", errors.New("userID not found in token")
 	}
 
 	return userID, nil
